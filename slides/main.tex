@@ -1,0 +1,99 @@
+% Aspectratio 16:9 for modern projectors
+\documentclass[aspectratio=169, 11pt, xcolor=table]{beamer}
+
+% Import custom style (reuse HCMUS beamer theme)
+\usepackage{settings/hcmus_beamer}
+\input{settings/packages}
+\input{settings/commands}
+
+% Define image directories
+\graphicspath{ {./images/} {./figures/} }
+
+% --- PRESENTATION METADATA ---
+\titlegraphic{
+    \includegraphics[height=1.5cm]{hcmus_logo}
+}
+
+\title[{Artist Revenue Management System}]{
+    \textbf{Artist Revenue Management System} \\
+    \small Database Design \& Implementation
+}
+
+\subtitle{MDL018 -- Data Organization and Management}
+
+\author[Group XX]{
+    \small
+    \begin{tabular}{c c c c}
+        \textbf{Member A}          & \textbf{Member B}          & \textbf{Member C}          & \textbf{Member D}          \\
+        \scriptsize \textit{ID\_A}   & \scriptsize \textit{ID\_B}   & \scriptsize \textit{ID\_C}   & \scriptsize \textit{ID\_D}
+    \end{tabular}
+}
+
+\institute[HCMUS]{
+    \vspace{0.08em}
+    \begin{columns}[c]
+        \begin{column}{0.4\textwidth}
+            \flushright
+            \includegraphics[height=1.2cm, keepaspectratio]{images/hcmus_logo}
+        \end{column}
+        \begin{column}{0.6\textwidth}
+            \flushleft
+            \scriptsize Faculty of Information Technology \\
+            \small \textbf{University of Science -- VNU-HCM}
+        \end{column}
+    \end{columns}
+}
+
+\date{\small \today}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{
+    \hbox{
+        \begin{beamercolorbox}[wd=1\paperwidth, ht=2.25ex, dp=1ex, right]{}
+            \color{gray} \small \insertframenumber{} / \inserttotalframenumber \hspace*{2em}
+        \end{beamercolorbox}
+    }
+    \vspace*{0.5em}
+}
+
+% --- MAIN DOCUMENT ---
+\begin{document}
+
+% 1. Title Slide
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% 2. Table of Contents
+\begin{frame}{Table of Contents}
+    \tableofcontents[hideallsubsections]
+\end{frame}
+
+% 3. Modular Content — mỗi thành viên làm 1 section
+\include{sections/01_intro/_master}
+\include{sections/02_erd/_master}
+\include{sections/03_implementation/_master}
+\include{sections/04_exploitation/_master}
+\include{sections/05_demo/_master}
+\include{sections/06_conclusion/_master}
+
+% --- FINAL SLIDE ---
+\begin{frame}[plain]
+    \centering
+    \vspace{1cm}
+    {\Huge \bfseries \textcolor{darkred}{Thank you for your attention!}}
+
+    \vspace{1.5cm}
+    {\LARGE \textbf{Q \& A}} \\
+    \vspace{0.5em}
+    \textit{\color{gray} We are ready to answer your questions.}
+
+    \vspace{2cm}
+    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block title}
+        \textbf{Source Code \& Database:} \\
+        \vspace{0.3em}
+        \footnotesize \url{https://github.com/<org>/artist-revenue-management}
+    \end{beamercolorbox}
+\end{frame}
+
+\end{document}

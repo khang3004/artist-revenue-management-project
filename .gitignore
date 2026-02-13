@@ -1,0 +1,67 @@
+# Environment
+.env
+*.env.local
+
+# Database
+pgdata/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Temp
+*.tmp
+*.log
+
+# === LaTeX intermediate files ===
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+
+# === Latexmk ===
+*.latexmk
+
+# === Build folder (nếu dùng outDir) ===
+out/
+build/
+
+# === Auto backup files ===
+*.bak
+*.swp
+*~
+
+# === MacOS ===
+.DS_Store
+
+# === Windows ===
+Thumbs.db

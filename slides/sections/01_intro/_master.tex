@@ -1,0 +1,78 @@
+\section{Introduction}
+
+\begin{frame}{Database Objectives}
+    \sectionCard{Artist Revenue Management System}{Database Design Project}
+
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{Problem Statement:}
+            \begin{itemize}
+                \item Music artists have revenue from \highlight{multiple sources}: streaming, download, live shows
+                \item Need to manage \highlight{contracts}, revenue splitting between multiple parties
+                \item Track tracks, albums, bookings and payments
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \textbf{Database Goals:}
+            \begin{itemize}
+                \item Manage artist info, record labels, albums, tracks
+                \item Record revenue from multiple sources
+                \item Manage contracts \& profit distribution
+                \item Statistics, revenue trend analysis
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{User Personas}
+    \begin{columns}[T]
+        \begin{column}{0.33\textwidth}
+            \begin{block}{\centering 🎤 Artists}
+                \small
+                \begin{itemize}
+                    \item View personal revenue
+                    \item Track tracks, albums
+                    \item Check wallet balance
+                    \item View booking schedule
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.33\textwidth}
+            \begin{block}{\centering 🏢 Record Labels}
+                \small
+                \begin{itemize}
+                    \item Manage signed artists
+                    \item Create \& manage contracts
+                    \item Distribute revenue
+                    \item Monitor revenue logs
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.33\textwidth}
+            \begin{block}{\centering 📊 Administrators}
+                \small
+                \begin{itemize}
+                    \item System-wide statistics
+                    \item Manage venues, bookings
+                    \item Revenue reports
+                    \item Dashboard analytics
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Tech Stack}
+    \centering
+    \begin{tabular}{l l l}
+        \toprule
+        \textbf{Layer} & \textbf{Technology} & \textbf{Role} \\
+        \midrule
+        Database    & PostgreSQL 16 + pgvector  & Storage \& queries \\
+        Backend     & SQL Stored Procedures     & Data exploitation \\
+        Frontend    & Streamlit + Plotly        & Dashboard analytics \\
+        Infra       & Docker Compose            & Deployment \\
+        VCS         & Git + GitHub              & Source code management \\
+        \bottomrule
+    \end{tabular}
+\end{frame}

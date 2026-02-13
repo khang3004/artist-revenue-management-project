@@ -1,0 +1,113 @@
+\section{Conceptual Design (ERD)}
+
+\begin{frame}{ERD Overview}
+    \textbf{13 entities} divided into 3 functional groups:
+
+    \vspace{0.5em}
+    \begin{columns}[T]
+        \begin{column}{0.33\textwidth}
+            \begin{alertblock}{\centering Core Entities}
+                \small
+                \begin{itemize}
+                    \item \tbl{artists} (cha)
+                    \item \tbl{solo\_artists} (con)
+                    \item \tbl{bands} (con)
+                    \item \tbl{labels}
+                    \item \tbl{albums}
+                    \item \tbl{tracks}
+                \end{itemize}
+            \end{alertblock}
+        \end{column}
+        \begin{column}{0.33\textwidth}
+            \begin{block}{\centering Revenue \& Contracts}
+                \small
+                \begin{itemize}
+                    \item \tbl{revenue\_logs}
+                    \item \tbl{contracts}
+                    \item \tbl{contract\_splits}
+                    \item \tbl{artist\_wallets}
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.33\textwidth}
+            \begin{exampleblock}{\centering Booking \& Venues}
+                \small
+                \begin{itemize}
+                    \item \tbl{bookings}
+                    \item \tbl{venues}
+                    \item \tbl{managers}
+                \end{itemize}
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.5em}
+    \centering
+    \small \highlight{ISA Relationship (parent--child):} \tbl{artists} $\rightarrow$ \{\tbl{solo\_artists}, \tbl{bands}\} — disjoint, total participation
+\end{frame}
+
+\begin{frame}{ERD Diagram}
+    \centering
+    % TODO: Insert ERD figure exported from dbdiagram.io
+    % \includegraphics[width=0.95\textwidth]{figures/erd.png}
+
+    \vspace{1cm}
+    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block body}
+        \large \textit{(Insert ERD diagram here)} \\
+        \small Created with dbdiagram.io or draw.io, export as PNG
+    \end{beamercolorbox}
+\end{frame}
+
+\begin{frame}{ISA Relationship: artists $\rightarrow$ solo\_artists / bands}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Why ISA?}
+                \small
+                \begin{itemize}
+                    \item Solo artists and bands have \highlight{distinct attributes}
+                    \item Solo: main instrument, solo style
+                    \item Band: member count, formation date
+                    \item Shared: stage\_name, debut\_date, label\_id
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{exampleblock}{Design}
+                \small
+                \tbl{artists} (parent): \\
+                \quad PK: artist\_id \\
+                \quad stage\_name, full\_name, debut\_date \\
+                \quad label\_id $\rightarrow$ FK labels \\
+
+                \vspace{0.5em}
+                \tbl{solo\_artists} (child): \\
+                \quad PK/FK: artist\_id $\rightarrow$ artists \\
+                \quad instrument, solo\_style \\
+
+                \vspace{0.5em}
+                \tbl{bands} (child): \\
+                \quad PK/FK: artist\_id $\rightarrow$ artists \\
+                \quad member\_count, formation\_date
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Main Relationships}
+    \small
+    \begin{tabular}{l l l}
+        \toprule
+        \textbf{Relationship} & \textbf{Cardinality} & \textbf{Description} \\
+        \midrule
+        artists $\rightarrow$ solo/bands & ISA (d, t) & Parent--child, disjoint, total \\
+        labels $\rightarrow$ artists     & 1:N         & Label manages multiple artists \\
+        artists $\rightarrow$ albums     & 1:N         & Artist releases multiple albums \\
+        albums $\rightarrow$ tracks      & 1:N         & Album contains multiple tracks \\
+        tracks $\leftarrow$ revenue\_logs & 1:N        & Track has multiple revenue logs \\
+        contracts $\leftrightarrow$ artists & M:N (via splits) & Contract splits across parties \\
+        artists $\rightarrow$ bookings   & 1:N         & Artist has multiple bookings \\
+        venues $\rightarrow$ bookings    & 1:N         & Venue hosts multiple shows \\
+        managers $\rightarrow$ bookings  & 1:N         & Manager handles multiple bookings \\
+        \bottomrule
+    \end{tabular}
+\end{frame}

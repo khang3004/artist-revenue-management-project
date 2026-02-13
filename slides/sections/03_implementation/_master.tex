@@ -1,0 +1,93 @@
+\section{Implementation Results}
+
+\begin{frame}{Physical Design -- Main Tables}
+    \centering
+    \small
+    \begin{tabular}{l l l l}
+        \toprule
+        \textbf{Attribute} & \textbf{Description} & \textbf{Type} & \textbf{Constraints} \\
+        \midrule
+        \multicolumn{4}{l}{\highlight{Table: artists}} \\
+        artist\_id  & Artist ID      & SERIAL       & PK \\
+        stage\_name & Stage name        & VARCHAR(100) & NOT NULL \\
+        full\_name  & Real name         & VARCHAR(150) & NOT NULL \\
+        debut\_date & Debut date      & DATE         & \\
+        metadata   & Social media links & JSONB        & \\
+        label\_id  & Label ID    & INT          & FK $\rightarrow$ labels \\
+        \midrule
+        \multicolumn{4}{l}{\highlight{Table: tracks}} \\
+        track\_id   & Track ID       & SERIAL       & PK \\
+        title      & Track title           & VARCHAR(200) & NOT NULL \\
+        duration   & Duration (seconds) & INT          & CHECK $>$ 0 \\
+        album\_id  & Album ID          & INT          & FK $\rightarrow$ albums \\
+        play\_count & Play count        & BIGINT       & DEFAULT 0 \\
+        isrc       & International code & VARCHAR(12)  & UNIQUE \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.5em}
+    \scriptsize \textit{(See all 13 tables in the report)}
+\end{frame}
+
+\begin{frame}{PostgreSQL Implementation}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Infrastructure}
+                \small
+                \begin{itemize}
+                    \item \highlight{Docker Compose}: PostgreSQL 16 + pgvector + pgAdmin
+                    \item SQL scripts run \textbf{idempotent} (DROP IF EXISTS)
+                    \item Migrations in order: \texttt{001\_ $\rightarrow$ 002\_ $\rightarrow$ 003\_}
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{exampleblock}{Sample Data}
+                \small
+                \begin{tabular}{l r}
+                    \toprule
+                    \textbf{Table} & \textbf{Records} \\
+                    \midrule
+                    labels         & 5 \\
+                    artists        & 10 \\
+                    albums         & 15 \\
+                    tracks         & 40 \\
+                    revenue\_logs  & 100+ \\
+                    contracts      & 10 \\
+                    contract\_splits & 20 \\
+                    bookings       & 15 \\
+                    \bottomrule
+                \end{tabular}
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Views \& Materialized Views}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Views (real-time computed)}
+                \small
+                \tbl{v\_top\_artists}: \\
+                \quad Top artists by total plays \\
+
+                \vspace{0.5em}
+                \tbl{v\_top\_artists2}: \\
+                \quad Top artists by actual revenue
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{alertblock}{Materialized View (cached)}
+                \small
+                \tbl{mv\_top\_artist\_cached}: \\
+                \quad Pre-computed ranking \\
+                \quad Faster query for Dashboard \\
+                \quad Periodic refresh:
+                \vspace{0.3em}
+
+                \texttt{\scriptsize REFRESH MATERIALIZED VIEW} \\
+                \texttt{\scriptsize mv\_top\_artist\_cached;}
+            \end{alertblock}
+        \end{column}
+    \end{columns}
+\end{frame}

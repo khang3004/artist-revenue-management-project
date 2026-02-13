@@ -1,0 +1,56 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{khang_beamer}[2026/01/23 Custom Beamer Style for Group 3]
+\RequirePackage{tikz}
+% --- 1. LANGUAGE & ENCODING ---
+\RequirePackage[utf8]{inputenc}
+% We keep vntex just in case you need to type Vietnamese names (e.g., Nguyen)
+% but the main content will be English.
+%\RequirePackage{vntex}
+
+% --- 2. THEME SELECTION ---
+% 'Madrid' is clean, organized, and has a footer for progress tracking.
+\usetheme{Warsaw}
+% 'Beaver' uses Red/Gray tones (Professional & Warning-friendly).
+\usecolortheme{beaver}
+
+% --- 3. FONT CONFIGURATION (CRITICAL) ---
+\RequirePackage{lmodern}         % 1. Use Latin Modern (High quality fonts)
+\usefonttheme{professionalfonts} % 2. Prevent Beamer from overwriting math fonts
+\usefonttheme[onlymath]{serif}   % 3. CRITICAL: Force Math to use Serif, Text remains Sans-serif
+
+% --- 4. UTILITIES PACKAGES ---
+\RequirePackage{graphicx}        % For images
+\RequirePackage{booktabs}        % For professional tables
+\RequirePackage{amsmath, amssymb, mathtools} % For advanced math
+\RequirePackage{caption}
+% Make captions smaller and bold the label (e.g., "Figure 1")
+\captionsetup{font=scriptsize, labelfont={bf}}
+
+% --- 5. UI TWEAKS ---
+% Remove the navigation symbols at the bottom right (useless and ugly)
+\setbeamertemplate{navigation symbols}{}
+
+% --- 6. MACROS DEFINITIONS (DRY Principle) ---
+\DeclareMathOperator{\E}{\mathbb{E}}        % Expectation
+\DeclareMathOperator{\Var}{Var}             % Variance
+\DeclareMathOperator{\Bias}{Bias}           % Bias
+\newcommand{\vect}[1]{\mathbf{#1}}          % Bold vectors
+% @brief: Symbol for Real number space (R)
+\newcommand{\R}{\mathbb{R}}
+
+% @brief: Absolute value with auto-sizing delimiters.
+% @usage: \abs{x} or \abs*{x} for dynamic sizing.
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+%\logo{
+%    \includegraphics[height=0.8cm]{hcmus_logo}
+%%    \vspace{220pt}
+%}
+
+\addtobeamertemplate{headline}{}{%
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[anchor=north west, inner sep=0pt] at (current page.north west) [xshift=0.2cm, yshift=-0.1cm] {
+            \includegraphics[height=0.7cm]{hcmus_logo}
+        };
+    \end{tikzpicture}
+}
+\endinput

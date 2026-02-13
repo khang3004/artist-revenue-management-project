@@ -1,0 +1,60 @@
+/* Custom styles for Artist Revenue Management System */
+
+/* Main container */
+.main {
+  padding: 2rem;
+}
+
+/* Metric cards */
+[data-testid="stMetricValue"] {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Headers */
+h1 {
+  color: #1f77b4;
+  font-weight: 700;
+}
+
+h2,
+h3 {
+  color: #2c3e50;
+}
+
+/* Tables */
+[data-testid="stDataFrame"] {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Buttons */
+.stButton > button {
+  border-radius: 5px;
+  background-color: #1f77b4;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 0.5rem 1rem;
+}
+
+.stButton > button:hover {
+  background-color: #155a8a;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+  background-color: #f8f9fa;
+}
+
+/* Info boxes */
+.stAlert {
+  border-radius: 8px;
+}
+
+/* Footer */
+.caption {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+}

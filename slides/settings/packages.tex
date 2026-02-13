@@ -1,0 +1,41 @@
+% -----------------------------------------------------------------------------
+% File: settings/packages.tex
+% Description: Centralized package imports for Artist Revenue slides
+% -----------------------------------------------------------------------------
+
+% --- Visualization ---
+\usepackage{tikz}
+\usetikzlibrary{shapes, shapes.geometric, arrows, positioning, fit, calc, shadows, er}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% --- Layout & Formatting ---
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multicol}
+\usepackage{tabularx}
+\usepackage{adjustbox}
+
+% --- Code Highlighting ---
+\usepackage{listings}
+\lstset{
+    language=SQL,
+    basicstyle=\ttfamily\tiny,
+    keywordstyle=\bfseries\color{techBlue},
+    stringstyle=\color{codeGreen},
+    commentstyle=\color{gray},
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+}
+
+% --- Bibliography ---
+% \usepackage[style=ieee, backend=biber]{biblatex}
+% \addbibresource{bib/references.bib}
+
+% --- Graphics ---
+\usepackage{graphicx}

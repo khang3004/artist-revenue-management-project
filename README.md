@@ -1,38 +1,39 @@
 # 🎵 Artist Revenue Management System
 
-> **MDL018 — Tổ chức và Quản lý Dữ liệu**
-> Trường Đại học Khoa Học Tự Nhiên — ĐHQG-HCM
+> **MDL018 — Data Organization and Management**
+> University of Science — VNU-HCM
+
 ---
 
 ## 🏗️ Tech Stack
 
-| Layer | Công nghệ |
-|-------|-----------|
+| Layer    | Technology               |
+| -------- | ------------------------ |
 | Database | PostgreSQL 16 + pgvector |
-| Backend | SQL Stored Procedures |
-| Frontend | Streamlit + Plotly |
-| Infra | Docker Compose |
-| VCS | Git + GitHub |
+| Backend  | SQL Stored Procedures    |
+| Frontend | Streamlit + Plotly       |
+| Infra    | Docker Compose           |
+| VCS      | Git + GitHub             |
 
 ---
 
-## 📁 Cấu trúc thư mục
+## 📁 Project Structure
 
 ```
 artist-revenue-management/
 │
-├── README.md                       # File này
-├── CONTRIBUTING.md                  # Git conventions (xem bên dưới)
+├── README.md                       # This file
+├── CONTRIBUTING.md                # Git conventions and workflow
 ├── .gitignore
-├── .env.example                    # Template biến môi trường
-├── docker-compose.yml              # PostgreSQL + pgAdmin + Streamlit
+├── .env.example                   # Environment variables template
+├── docker-compose.yml             # PostgreSQL + pgAdmin + Streamlit
 │
 ├── db/                             # 🗄️ Database scripts
-│   ├── migrations/                 # DDL scripts (chạy theo thứ tự)
+│   ├── migrations/                 # DDL scripts (run in order)
 │   │   ├── 001_create_tables.sql
-│   │   ├── 002_create_isa.sql      # Bảng ISA (solo_artist, band)
+│   │   ├── 002_create_isa.sql      # ISA tables (solo_artist, band)
 │   │   └── 003_create_views.sql    # Views + Materialized Views
-│   ├── seeds/                      # Dữ liệu mẫu
+│   ├── seeds/                      # Sample data
 │   │   ├── 001_seed_labels.sql
 │   │   ├── 002_seed_artists.sql
 │   │   ├── 003_seed_albums_tracks.sql
@@ -59,24 +60,24 @@ artist-revenue-management/
 │   └── assets/
 │       └── style.css
 │
-├── docs/                           # 📝 Tài liệu đồ án
-│   ├── dac-ta-yeu-cau.md           # Đặc tả yêu cầu dữ liệu
-│   ├── thiet-ke-luan-ly.md         # Thiết kế luận lý
-│   ├── thiet-ke-vat-ly.md          # Thiết kế vật lý
-│   ├── stored-procedures-plan.md   # Kế hoạch stored procedures
+├── docs/                           # 📝 Project documentation
+│   ├── dac-ta-yeu-cau.md           # Data requirements specification
+│   ├── thiet-ke-luan-ly.md         # Logical design
+│   ├── thiet-ke-vat-ly.md          # Physical design
+│   ├── stored-procedures-plan.md   # Stored procedures plan
 │   └── erd/
-│       ├── erd.dbml                # Source ERD (dbdiagram.io)
-│       └── erd.png                 # Export ERD image
+│       ├── erd.dbml                # ERD source (dbdiagram.io)
+│       └── erd.png                 # ERD image export
 │
-├── reports/                        # 📄 Sản phẩm nộp
-│   ├── MaNhom.docx                 # Báo cáo
-│   └── screenshots/                # Kết quả khai thác
+├── reports/                        # 📄 Deliverables
+│   ├── MaNhom.docx                 # Final report
+│   └── screenshots/                # Query results
 │       ├── sp1_revenue_rollup.png
 │       ├── sp2_revenue_pivot.png
 │       └── ...
 │
-└── slides/                         # 🎬 Slide trình bày
-    └── MaNhom.tex                  #TODO: will add later for setting up
+└── slides/                         # 🎬 Presentation slides
+    └── main.tex                    # LaTeX presentation file
 ```
 
 ---
@@ -84,28 +85,68 @@ artist-revenue-management/
 ## 🚀 Quickstart
 
 ```bash
-# 1. Clone repo
+# 1. Clone repository
 git clone https://github.com/<org>/artist-revenue-management.git
 cd artist-revenue-management
 
-# 2. Copy env
+# 2. Copy environment file
 cp .env.example .env
 
-# 3. Khởi chạy
+# 3. Start services
 docker compose up -d
 
-# 4. Truy cập
+# 4. Access applications
 # Streamlit:  http://localhost:8501
 # pgAdmin:    http://localhost:5050
 ```
 
 ---
 
-## 👥 Thành viên
+## 👥 Team Members
 
-| Vai trò | Thành viên | MSSV |
-|---------|-----------|------|
-| DB Architect (A) | [Tên] | [MSSV] |
-| SQL Developer (B) | [Tên] | [MSSV] |
-| Query Engineer (C) | [Tên] | [MSSV] |
-| Report & Demo (D) | [Tên] | [MSSV] |
+| Role               | Member | Student ID |
+| ------------------ | ------ | ---------- |
+| DB Architect (A)   | [Name] | [ID]       |
+| SQL Developer (B)  | [Name] | [ID]       |
+| Query Engineer (C) | [Name] | [ID]       |
+| Report & Demo (D)  | [Name] | [ID]       |
+
+---
+
+## 📝 Development Workflow
+
+1. **Create feature branch**: See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming conventions
+2. **Implement changes**: Follow code standards and commit conventions
+3. **Test locally**: Use Docker Compose for local testing
+4. **Create pull request**: Request team review before merging
+5. **Merge to develop**: Integration branch for all features
+6. **Release to main**: Production-ready code only
+
+---
+
+## 📚 Documentation
+
+- **Data Specification**: [docs/dac-ta-yeu-cau.md](docs/dac-ta-yeu-cau.md)
+- **Logical Design**: [docs/thiet-ke-luan-ly.md](docs/thiet-ke-luan-ly.md)
+- **Physical Design**: [docs/thiet-ke-vat-ly.md](docs/thiet-ke-vat-ly.md)
+- **Stored Procedures**: [docs/stored-procedures-plan.md](docs/stored-procedures-plan.md)
+- **Git Workflow**: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 🎯 Project Status
+
+- [x] Project structure initialized
+- [x] Docker configuration completed
+- [x] Documentation templates created
+- [ ] Database schema implementation
+- [ ] Sample data insertion
+- [ ] Stored procedures development
+- [ ] Streamlit dashboard development
+- [ ] Final report and presentation
+
+---
+
+## 📞 Contact
+
+For questions or issues, please open an issue in the repository or contact the team lead.

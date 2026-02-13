@@ -1,0 +1,50 @@
+\section{Conclusion}
+
+\begin{frame}{Summary}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Completed}
+                \begin{itemize}
+                    \item 13 tables with complete PK, FK, CHECK, UNIQUE
+                    \item ISA relationship: \tbl{artists} $\rightarrow$ \tbl{solo\_artists} / \tbl{bands}
+                    \item Normalized \tbl{bookings} from bad design
+                    \item 5+ Stored Procedures: ROLLUP, PIVOT, nested subquery
+                    \item Views + Materialized View
+                    \item Streamlit Dashboard + Docker
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{exampleblock}{Highlights}
+                \begin{itemize}
+                    \item \highlight{Realistic} sample data (VN/international artists)
+                    \item \tbl{revenue\_logs.raw\_data} uses \highlight{JSONB} -- PostgreSQL advanced
+                    \item Materialized View for \highlight{query optimization}
+                    \item Docker Compose -- \highlight{1 command} runs everything
+                    \item Visual demo with Plotly charts
+                \end{itemize}
+            \end{exampleblock}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Team Contributions}
+    \centering
+    \begin{tabular}{c l l c}
+        \toprule
+        \textbf{No.} & \textbf{Name} & \textbf{Assignment} & \textbf{Contribution} \\
+        \midrule
+        1 & Member A & Specification, ERD, design, report & 25\% \\
+        2 & Member B & DDL scripts, seed data, views   & 25\% \\
+        3 & Member C & Stored procedures, exploitation     & 25\% \\
+        4 & Member D & Streamlit demo, slides, report  & 25\% \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{1.5em}
+    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block title}
+        \small \textbf{Git:} 4 members $\times$ feature branches $\rightarrow$ develop $\rightarrow$ main \\
+        \vspace{0.3em}
+        \scriptsize Commit convention: \texttt{feat(db): create core tables}
+    \end{beamercolorbox}
+\end{frame}

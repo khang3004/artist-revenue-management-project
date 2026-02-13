@@ -1,0 +1,80 @@
+\section{Application Demo}
+
+\begin{frame}{Demo System Architecture}
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        box/.style={draw, rounded corners, minimum width=3cm, minimum height=1cm, align=center, font=\small},
+        arrow/.style={->, thick, >=stealth}
+    ]
+        \node[box, fill=blue!15] (user) {User \\ (Browser)};
+        \node[box, fill=green!15, right=2cm of user] (streamlit) {Streamlit \\ Dashboard};
+        \node[box, fill=orange!15, right=2cm of streamlit] (postgres) {PostgreSQL 16 \\ + pgvector};
+        \node[box, fill=gray!15, below=1cm of streamlit] (docker) {Docker Compose};
+
+        \draw[arrow] (user) -- node[above, font=\scriptsize] {:8501} (streamlit);
+        \draw[arrow] (streamlit) -- node[above, font=\scriptsize] {SQL / SP} (postgres);
+        \draw[arrow, dashed, gray] (docker.west) -| (streamlit);
+        \draw[arrow, dashed, gray] (docker.east) -| (postgres);
+    \end{tikzpicture}
+
+    \vspace{1em}
+    \small
+    Run everything with 1 command: \texttt{\highlight{docker compose up -d}}
+\end{frame}
+
+\begin{frame}{Dashboard -- Overview Statistics}
+    % TODO: Insert Streamlit Dashboard screenshot
+    \centering
+    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block body}
+        \large \textit{(Insert Dashboard screenshot here)}
+    \end{beamercolorbox}
+
+    \vspace{0.5em}
+    \small
+    \begin{columns}[c]
+        \begin{column}{0.25\textwidth}
+            \centering
+            \kpiCard{3.5cm}{Artists}{10}
+        \end{column}
+        \begin{column}{0.25\textwidth}
+            \centering
+            \kpiCard{3.5cm}{Tracks}{40+}
+        \end{column}
+        \begin{column}{0.25\textwidth}
+            \centering
+            \kpiCard{3.5cm}{Revenue}{500M+}
+        \end{column}
+        \begin{column}{0.25\textwidth}
+            \centering
+            \kpiCard{3.5cm}{Bookings}{15}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Revenue Charts \& PIVOT}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \centering
+            \textbf{Revenue by month (ROLLUP)} \\
+            \vspace{0.5em}
+            % TODO: Insert revenue chart screenshot
+            \begin{beamercolorbox}[sep=5pt, center, rounded=true]{block body}
+                \scriptsize \textit{(Screenshot of Plotly chart)}
+            \end{beamercolorbox}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \textbf{PIVOT: revenue source $\times$ artist} \\
+            \vspace{0.5em}
+            % TODO: Insert PIVOT table screenshot
+            \begin{beamercolorbox}[sep=5pt, center, rounded=true]{block body}
+                \scriptsize \textit{(Screenshot of crosstab table)}
+            \end{beamercolorbox}
+        \end{column}
+    \end{columns}
+
+    \vspace{1em}
+    \centering
+    \small Data directly from \highlight{Stored Procedures} $\rightarrow$ Plotly charts
+\end{frame}
