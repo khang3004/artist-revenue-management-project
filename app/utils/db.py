@@ -1,119 +1,108 @@
 """
-Database connection utilities
+Database connection utilities for Neon PostgreSQL (Cloud only)
 """
 
-import os
 import psycopg2
-from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
+import os
 import streamlit as st
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-def get_db_config():
-    """Get database configuration from environment variables"""
-    return {
-        'host': os.getenv('POSTGRES_HOST', 'postgres'),
-        'port': os.getenv('POSTGRES_PORT', '5432'),
-        'database': os.getenv('POSTGRES_DB', 'artist_revenue_db'),
-        'user': os.getenv('POSTGRES_USER', 'postgres'),
-        'password': os.getenv('POSTGRES_PASSWORD', 'postgres')
-    }
 
 @st.cache_resource
 def get_db_connection():
     """
-    Create and cache database connection
-    Returns a connection pool for reuse
+    Create and cache Neon PostgreSQL connection
     """
     try:
-        config = get_db_config()
-        conn = psycopg2.connect(**config)
+        database_url = os.getenv("DATABASE_URL")
+
+        if not database_url:
+            raise Exception("DATABASE_URL environment variable not set")
+
+        conn = psycopg2.connect(
+            database_url,
+            sslmode="require"
+        )
+
         return conn
+
     except Exception as e:
         st.error(f"Database connection error: {e}")
         return None
 
+
 def test_connection():
-    """Test if database connection is working"""
+    """
+    Test database connection
+    """
     try:
         conn = get_db_connection()
+
         if conn is None:
             return False
-        
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
+
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        cur.close()
+
         return True
+
     except Exception as e:
-        print(f"Connection test failed: {e}")
+        print("Connection test failed:", e)
         return False
 
-def execute_query(query, params=None, fetch=True):
-    """
-    Execute a SQL query and return results
-    
-    Args:
-        query: SQL query string
-        params: Query parameters (optional)
-        fetch: Whether to fetch results (default: True)
-    
-    Returns:
-        Query results as list of dictionaries, or None
-    """
-    try:
-        conn = get_db_connection()
-        if conn is None:
-            return None
-        
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        if params:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
-        
-        if fetch:
-            results = cursor.fetchall()
-            cursor.close()
-            return results
-        else:
-            conn.commit()
-            cursor.close()
-            return True
-            
-    except Exception as e:
-        st.error(f"Query execution error: {e}")
-        return None
 
-def call_stored_procedure(procedure_name, params=None):
+def execute_query(query, params=None):
     """
-    Call a stored procedure
-    
-    Args:
-        procedure_name: Name of the stored procedure
-        params: Procedure parameters (optional)
-    
-    Returns:
-        Procedure results as list of dictionaries
+    Execute SELECT query and return results
     """
     try:
         conn = get_db_connection()
+
         if conn is None:
-            return None
-        
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        if params:
-            cursor.execute(f"SELECT * FROM {procedure_name}(%s)", params)
-        else:
-            cursor.execute(f"SELECT * FROM {procedure_name}()")
-        
-        results = cursor.fetchall()
-        cursor.close()
-        return results
-        
+            st.error("Database connection not available")
+            return [], []
+
+        cur = conn.cursor()
+
+        cur.execute(query, params)
+
+        columns = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+
+        cur.close()
+
+        return columns, rows
+
     except Exception as e:
-        st.error(f"Stored procedure error: {e}")
-        return None
+        st.error(f"Query failed: {e}")
+        return [], []
+
+
+def execute_non_query(query, params=None):
+    """
+    Execute INSERT / UPDATE / DELETE queries
+    """
+    try:
+        conn = get_db_connection()
+
+        if conn is None:
+            st.error("Database connection not available")
+            return False
+
+        cur = conn.cursor()
+
+        cur.execute(query, params)
+        conn.commit()
+
+        cur.close()
+
+        return True
+
+    except Exception as e:
+        st.error(f"Database operation failed: {e}")
+        return False
