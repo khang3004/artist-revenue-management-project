@@ -26,6 +26,7 @@ def get_db_connection():
             database_url,
             sslmode="require"
         )
+        conn.autocommit = True
 
         return conn
 
@@ -43,6 +44,8 @@ def test_connection():
 
         if conn is None:
             return False
+
+        conn.rollback()
 
         cur = conn.cursor()
         cur.execute("SELECT 1")
@@ -66,6 +69,8 @@ def execute_query(query, params=None):
         if conn is None:
             st.error("Database connection not available")
             return [], []
+
+        conn.rollback()
 
         cur = conn.cursor()
 
