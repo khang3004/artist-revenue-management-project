@@ -44,7 +44,7 @@ services:
       dockerfile: Dockerfile
     container_name: artist_revenue_streamlit
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-artist_revenue_db}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-artist_revenue_db}}
     ports:
       - "${STREAMLIT_PORT:-8501}:8501"
     depends_on:
