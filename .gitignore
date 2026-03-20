@@ -65,3 +65,8 @@ build/
 
 # === Windows ===
 Thumbs.db
+
+# === ETL Data Lake ===
+etl/data_lake/raw/**
+etl/data_lake/clean/**
+!etl/data_lake/**/.gitkeep

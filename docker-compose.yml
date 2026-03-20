@@ -56,6 +56,33 @@ services:
       - ./app:/app
     command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
 
+  crawler:
+    build:
+      context: .
+      dockerfile: crawlers/Dockerfile
+    container_name: artist_revenue_crawler
+    profiles: ["pipeline"]
+    env_file: .env
+    volumes:
+      - ./etl/data_lake/raw:/app/etl/data_lake/raw
+      - ./.env:/app/.env
+
+  etl:
+    build:
+      context: .
+      dockerfile: etl/Dockerfile
+    container_name: artist_revenue_etl
+    profiles: ["pipeline"]
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - artist_revenue_network
+    volumes:
+      - ./etl/data_lake:/app/etl/data_lake
+      - ./.env:/app/.env
+
 volumes:
   postgres_data:
   pgadmin_data:
