@@ -34,15 +34,15 @@ def run():
         for _, r in df.iterrows():
             rows.append({
                 "venue_name": r["venue_name"],
-                "address": r.get("address"),
+                "venue_address": r.get("venue_address"),
                 "capacity": int(r["capacity"]) if pd.notna(r.get("capacity")) else None,
             })
         execute_values_upsert(
             table="venues",
-            columns=["venue_name", "address", "capacity"],
+            columns=["venue_name", "venue_address", "capacity"],
             rows=rows,
             conflict_columns=["venue_name"],
-            update_columns=["address", "capacity"],
+            update_columns=["venue_address", "capacity"],
         )
         print(f"  Upserted {len(rows)} venues")
 
@@ -58,14 +58,14 @@ def run():
         for _, r in df.iterrows():
             rows.append({
                 "manager_name": r["manager_name"],
-                "phone_manager": r.get("phone_manager"),
+                "manager_phone": r.get("manager_phone"),
             })
         execute_values_upsert(
             table="managers",
-            columns=["manager_name", "phone_manager"],
+            columns=["manager_name", "manager_phone"],
             rows=rows,
             conflict_columns=["manager_name"],
-            update_columns=["phone_manager"],
+            update_columns=["manager_phone"],
         )
         print(f"  Upserted {len(rows)} managers")
 
