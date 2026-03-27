@@ -34,7 +34,7 @@ def run():
         if vn and vn not in venues:
             venues[vn] = {
                 "venue_name": vn,
-                "address": ev.get("venue_address"),
+                "venue_address": ev.get("venue_address"),
                 "capacity": ev.get("venue_capacity"),
             }
     df_venues = pd.DataFrame(venues.values())
@@ -48,7 +48,7 @@ def run():
         if mn and mn not in managers:
             managers[mn] = {
                 "manager_name": mn,
-                "phone_manager": ev.get("manager_phone"),
+                "manager_phone": ev.get("manager_phone"),
             }
     df_managers = pd.DataFrame(managers.values())
     df_managers.to_csv(CLEAN_DIR / "managers.csv", index=False)
