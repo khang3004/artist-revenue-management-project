@@ -37,6 +37,7 @@ def _run_transform():
         "transform.01_clean_labels",
         "transform.02_clean_artists",
         "transform.03_clean_albums_tracks",
+        "transform.03b_merge_applemusic",
         "transform.04_clean_events",
         "transform.05_build_revenue",
         "transform.06_build_contracts",
