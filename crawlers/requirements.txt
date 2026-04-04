@@ -1,0 +1,7 @@
+musicbrainzngs>=0.7.1
+requests>=2.31.0
+pandas>=2.2.0
+sqlalchemy>=2.0.25
+python-dotenv>=1.0.1
+psycopg2-binary>=2.9.9
+tqdm>=4.66.0
