@@ -25,7 +25,7 @@ st.divider()
 
 st.subheader("Top Earning Artists")
 
-year = st.selectbox("Year", [2022, 2023, 2024], index=2)
+year = st.selectbox("Year", [2024, 2025, 2026], index=1)
 
 query = f"SELECT * FROM sp_top_earning_artists({year})"
 

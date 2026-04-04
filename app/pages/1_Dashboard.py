@@ -10,7 +10,7 @@ st.title("📊 Music Revenue Dashboard")
 # =========================
 # Year selector
 # =========================
-year = st.selectbox("Year", [2022, 2023, 2024], index=2)
+year = st.selectbox("Year", [2024, 2025, 2026], index=1)
 
 # =========================
 # Total Revenue
