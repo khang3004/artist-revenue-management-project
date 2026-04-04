@@ -1,78 +1,106 @@
+% ============================================================
+% Section 1: Introduction
+% ============================================================
 \section{Introduction}
 
-\begin{frame}{Database Objectives}
-    \sectionCard{Artist Revenue Management System}{Database Design Project}
+\begin{frame}{\secname}
+    \sectionCard{Artist Revenue Management System}{Objectives \textbf{·} Users \textbf{·} Technology Stack}
+\end{frame}
 
+% ----- Frame: Objectives -----
+\begin{frame}{System Objectives}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \textbf{Problem Statement:}
+        \begin{column}{0.55\textwidth}
+            \begin{block}{Problem Statement}
+                Build a \highlight{V-Pop music royalty \& revenue management} system
+                covering the full artist lifecycle: contracts, music catalog,
+                multi-source revenue streams, and transparent financial settlement
+                via digital wallets.
+            \end{block}
+            \vspace{0.4em}
+            \textbf{Three main revenue streams:}
             \begin{itemize}
-                \item Music artists have revenue from \highlight{multiple sources}: streaming, download, live shows
-                \item Need to manage \highlight{contracts}, revenue splitting between multiple parties
-                \item Track tracks, albums, bookings and payments
+                \item \textbf{Streaming} --- Spotify, Apple Music, Zing MP3
+                \item \textbf{Sync Licensing} --- films, ads, games
+                \item \textbf{Live Performance} --- concerts \& shows
             \end{itemize}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \textbf{Database Goals:}
-            \begin{itemize}
-                \item Manage artist info, record labels, albums, tracks
-                \item Record revenue from multiple sources
-                \item Manage contracts \& profit distribution
-                \item Statistics, revenue trend analysis
-            \end{itemize}
+        \begin{column}{0.42\textwidth}
+            \begin{exampleblock}{Core Requirements}
+                \begin{itemize}\small
+                    \item Contract management \& revenue splitting by percentage
+                    \item Digital wallets + financial audit trail
+                    \item Real-time analytics dashboard
+                    \item Automated ETL pipeline from multiple data sources
+                    \item Data integrity (append-only revenue logs)
+                \end{itemize}
+            \end{exampleblock}
         \end{column}
     \end{columns}
 \end{frame}
 
+% ----- Frame: User Personas -----
 \begin{frame}{User Personas}
     \begin{columns}[T]
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering 🎤 Artists}
-                \small
-                \begin{itemize}
-                    \item View personal revenue
-                    \item Track tracks, albums
-                    \item Check wallet balance
-                    \item View booking schedule
-                \end{itemize}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{\small Artist}
+                \scriptsize View personal revenue, track albums/tracks,
+                check wallet balance, view event schedule, request withdrawals
+            \end{block}
+            \vspace{0.4em}
+            \begin{block}{\small Record Label}
+                \scriptsize Manage signed artists, create \& manage contracts,
+                distribute revenue via contract splits, monitor revenue logs
             \end{block}
         \end{column}
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering 🏢 Record Labels}
-                \small
-                \begin{itemize}
-                    \item Manage signed artists
-                    \item Create \& manage contracts
-                    \item Distribute revenue
-                    \item Monitor revenue logs
-                \end{itemize}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{\small Manager / Booking Agent}
+                \scriptsize Manage performance schedules, book venues,
+                track event status
             \end{block}
-        \end{column}
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering 📊 Administrators}
-                \small
-                \begin{itemize}
-                    \item System-wide statistics
-                    \item Manage venues, bookings
-                    \item Revenue reports
-                    \item Dashboard analytics
-                \end{itemize}
+            \vspace{0.4em}
+            \begin{block}{\small System Administrator}
+                \scriptsize System-wide statistics, consolidated revenue reports,
+                analytics dashboard, wallet audit
             \end{block}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Tech Stack}
-    \centering
-    \begin{tabular}{l l l}
-        \toprule
-        \textbf{Layer} & \textbf{Technology} & \textbf{Role} \\
-        \midrule
-        Database    & PostgreSQL 16 + pgvector  & Storage \& queries \\
-        Backend     & SQL Stored Procedures     & Data exploitation \\
-        Frontend    & Streamlit + Plotly        & Dashboard analytics \\
-        Infra       & Docker Compose            & Deployment \\
-        VCS         & Git + GitHub              & Source code management \\
-        \bottomrule
-    \end{tabular}
+% ----- Frame: Tech Stack -----
+\begin{frame}{Technology Stack \& Actual Data}
+    \begin{columns}[T]
+        \begin{column}{0.52\textwidth}
+            \begin{tabular}{@{}ll@{}}
+                \toprule
+                \textbf{Component}    & \textbf{Technology} \\
+                \midrule
+                Database      & Neon Serverless PostgreSQL 16 \\
+                Stored Proc   & 8 SQL Functions (plpgsql) \\
+                Frontend      & Streamlit + Plotly \\
+                ETL           & Python + SQLAlchemy \\
+                Data Sources  & MusicBrainz API + Ticketbox \\
+                VCS           & Git (feat/fix $\to$ develop $\to$ main) \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \textbf{Loaded data (post-ETL):}
+            \vspace{0.3em}
+            \begin{tabular}{@{}lr@{}}
+                \toprule
+                \textbf{Entity}      & \textbf{Records} \\
+                \midrule
+                Artists              & 40 \\
+                Albums               & 781 \\
+                Tracks               & 250 \\
+                Revenue Logs         & 3{,}180 \\
+                Contracts            & 45 \\
+                Contract Splits      & 498 \\
+                Events               & 81 \\
+                Artist Wallets       & 22 \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+    \end{columns}
 \end{frame}

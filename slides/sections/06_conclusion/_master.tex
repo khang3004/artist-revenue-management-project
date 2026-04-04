@@ -1,50 +1,81 @@
+% ============================================================
+% Section 6: Conclusion
+% ============================================================
 \section{Conclusion}
 
+\begin{frame}{\secname}
+    \sectionCard{Conclusion}{Summary \textbf{·} Technical Highlights \textbf{·} Team Contributions}
+\end{frame}
+
+% ----- Frame: Summary -----
 \begin{frame}{Summary}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{Completed}
-                \begin{itemize}
-                    \item 13 tables with complete PK, FK, CHECK, UNIQUE
-                    \item ISA relationship: \tbl{artists} $\rightarrow$ \tbl{solo\_artists} / \tbl{bands}
-                    \item Normalized \tbl{bookings} from bad design
-                    \item 5+ Stored Procedures: ROLLUP, PIVOT, nested subquery
-                    \item Views + Materialized View
-                    \item Streamlit Dashboard + Docker
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{exampleblock}{Highlights}
-                \begin{itemize}
-                    \item \highlight{Realistic} sample data (VN/international artists)
-                    \item \tbl{revenue\_logs.raw\_data} uses \highlight{JSONB} -- PostgreSQL advanced
-                    \item Materialized View for \highlight{query optimization}
-                    \item Docker Compose -- \highlight{1 command} runs everything
-                    \item Visual demo with Plotly charts
+        \begin{column}{0.50\textwidth}
+            \begin{exampleblock}{Completed}
+                \begin{itemize}\scriptsize
+                    \item \textbf{19 tables} with 3 full ISA hierarchies \\
+                          (overlapping/partial + 2$\times$ disjoint/total)
+                    \item \textbf{8 Stored Procedures} --- ROLLUP, PIVOT (FILTER),
+                          Nested subquery in HAVING, LATERAL JOIN,
+                          Window (RANK), Correlated subqueries,
+                          CTE + ROLLUP, GIN + JSONB
+                    \item \textbf{Automated ETL pipeline}: MusicBrainz + Ticketbox
+                          $\to$ Transform $\to$ Neon (3,180 revenue logs)
+                    \item \textbf{5-page Streamlit dashboard} backed by all 8 SPs
+                    \item Materialized Views + GIN / B-Tree / Partial / Expression indexes
                 \end{itemize}
             \end{exampleblock}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \begin{block}{Technical Highlights}
+                \begin{itemize}\scriptsize
+                    \item \textbf{Polymorphic FK} --- \tbl{contract\_splits} $\to$
+                          Artist XOR Label (ISA beneficiaries table)
+                    \item \textbf{UUID PK} for contracts --- prevents ID enumeration
+                    \item \textbf{Append-only} \tbl{revenue\_logs} partitioned
+                          by quarter --- immutable financial audit trail
+                    \item \textbf{JSONB metadata} + GIN index --- flexible
+                          genre \& social-link search
+                    \item \textbf{Wallet reconciliation} --- difference $\approx$ 0
+                          for all 22 artists (audit\_status = OK)
+                    \item \textbf{Neon Serverless} --- SSL enforced,
+                          SCRAM-SHA-256, connection pooling
+                \end{itemize}
+            \end{block}
         \end{column}
     \end{columns}
 \end{frame}
 
+% ----- Frame: Team -----
 \begin{frame}{Team Contributions}
     \centering
-    \begin{tabular}{c l l c}
+    \begin{tabular}{@{}clll@{}}
         \toprule
-        \textbf{No.} & \textbf{Name} & \textbf{Assignment} & \textbf{Contribution} \\
+        & \textbf{Member} & \textbf{Responsibilities} & \textbf{Share} \\
         \midrule
-        1 & Member A & Specification, ERD, design, report & 25\% \\
-        2 & Member B & DDL scripts, seed data, views   & 25\% \\
-        3 & Member C & Stored procedures, exploitation     & 25\% \\
-        4 & Member D & Streamlit demo, slides, report  & 25\% \\
+        A & Member A & Requirements spec, ERD, logical design, report & 25\% \\
+        B & Member B & DDL scripts, seed data, views, indexes          & 25\% \\
+        C & Member C & Stored Procedures (8 SPs), ETL pipeline         & 25\% \\
+        D & Member D & Streamlit dashboard (5 pages), slides           & 25\% \\
         \bottomrule
     \end{tabular}
 
-    \vspace{1.5em}
-    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block title}
-        \small \textbf{Git:} 4 members $\times$ feature branches $\rightarrow$ develop $\rightarrow$ main \\
-        \vspace{0.3em}
-        \scriptsize Commit convention: \texttt{feat(db): create core tables}
-    \end{beamercolorbox}
+    \vspace{0.8em}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Git Workflow}
+                \scriptsize
+                \texttt{feat/fix/docs} branches \\
+                $\to$ \texttt{develop} $\to$ \texttt{main}
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Commit Convention}
+                \scriptsize
+                \texttt{feat(db): add ISA tables} \\
+                \texttt{fix(sp): cast play\_count to BIGINT} \\
+                \texttt{docs(erd): update 19-table diagram}
+            \end{block}
+        \end{column}
+    \end{columns}
 \end{frame}

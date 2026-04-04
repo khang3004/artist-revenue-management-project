@@ -1,93 +1,130 @@
-\section{Implementation Results}
+% ============================================================
+% Section 3: Implementation
+% ============================================================
+\section{Implementation}
 
-\begin{frame}{Physical Design -- Main Tables}
-    \centering
-    \small
-    \begin{tabular}{l l l l}
-        \toprule
-        \textbf{Attribute} & \textbf{Description} & \textbf{Type} & \textbf{Constraints} \\
-        \midrule
-        \multicolumn{4}{l}{\highlight{Table: artists}} \\
-        artist\_id  & Artist ID      & SERIAL       & PK \\
-        stage\_name & Stage name        & VARCHAR(100) & NOT NULL \\
-        full\_name  & Real name         & VARCHAR(150) & NOT NULL \\
-        debut\_date & Debut date      & DATE         & \\
-        metadata   & Social media links & JSONB        & \\
-        label\_id  & Label ID    & INT          & FK $\rightarrow$ labels \\
-        \midrule
-        \multicolumn{4}{l}{\highlight{Table: tracks}} \\
-        track\_id   & Track ID       & SERIAL       & PK \\
-        title      & Track title           & VARCHAR(200) & NOT NULL \\
-        duration   & Duration (seconds) & INT          & CHECK $>$ 0 \\
-        album\_id  & Album ID          & INT          & FK $\rightarrow$ albums \\
-        play\_count & Play count        & BIGINT       & DEFAULT 0 \\
-        isrc       & International code & VARCHAR(12)  & UNIQUE \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{0.5em}
-    \scriptsize \textit{(See all 13 tables in the report)}
+\begin{frame}{\secname}
+    \sectionCard{System Implementation}{Physical Design \textbf{·} ETL Pipeline \textbf{·} Indexes \& Views}
 \end{frame}
 
-\begin{frame}{PostgreSQL Implementation}
+% ----- Frame: Physical Design -----
+\begin{frame}[fragile]{Physical Design --- Highlights}
     \begin{columns}[T]
         \begin{column}{0.5\textwidth}
-            \begin{block}{Infrastructure}
-                \small
-                \begin{itemize}
-                    \item \highlight{Docker Compose}: PostgreSQL 16 + pgvector + pgAdmin
-                    \item SQL scripts run \textbf{idempotent} (DROP IF EXISTS)
-                    \item Migrations in order: \texttt{001\_ $\rightarrow$ 002\_ $\rightarrow$ 003\_}
-                \end{itemize}
-            \end{block}
+            \begin{lstlisting}[caption={artists --- JSONB metadata}]
+CREATE TABLE artists (
+  artist_id  SERIAL PRIMARY KEY,
+  stage_name VARCHAR(100) UNIQUE NOT NULL,
+  full_name  VARCHAR(200),
+  debut_date DATE,
+  birthday   DATE,
+  label_id   INT REFERENCES labels,
+  metadata   JSONB  -- genre, social_links
+);
+            \end{lstlisting}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{exampleblock}{Sample Data}
-                \small
-                \begin{tabular}{l r}
-                    \toprule
-                    \textbf{Table} & \textbf{Records} \\
-                    \midrule
-                    labels         & 5 \\
-                    artists        & 10 \\
-                    albums         & 15 \\
-                    tracks         & 40 \\
-                    revenue\_logs  & 100+ \\
-                    contracts      & 10 \\
-                    contract\_splits & 20 \\
-                    bookings       & 15 \\
-                    \bottomrule
-                \end{tabular}
-            \end{exampleblock}
+        \begin{column}{0.48\textwidth}
+            \begin{lstlisting}[caption={revenue\_logs --- partitioned}]
+CREATE TABLE revenue_logs (
+  log_id       BIGSERIAL,
+  track_id     INT REFERENCES tracks,
+  amount       DECIMAL(15,4) NOT NULL,
+  currency     VARCHAR(3) DEFAULT 'VND',
+  log_date     DATE NOT NULL,
+  revenue_type VARCHAR(20),
+  raw_data     JSONB,
+  PRIMARY KEY (log_id, log_date)
+) PARTITION BY RANGE (log_date);
+            \end{lstlisting}
+        \end{column}
+    \end{columns}
+    \vspace{0.2em}
+    \centering \scriptsize
+    Quarterly partitions: \tbl{revenue\_logs\_2025\_q1}, \tbl{revenue\_logs\_2025\_q2}, \ldots
+\end{frame}
+
+% ----- Frame: ETL Pipeline -----
+\begin{frame}{ETL Pipeline}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            \begin{tikzpicture}[
+                node distance=0.65cm,
+                font=\scriptsize,
+                box/.style={draw, rounded corners, minimum width=3.2cm,
+                            minimum height=0.55cm, align=center}
+            ]
+                \node[box, fill=techBlue!20]   (src)   {Sources: MusicBrainz + Ticketbox};
+                \node[box, fill=goldAccent!20, below=of src]  (raw)   {data\_lake/raw/ (JSON)};
+                \node[box, fill=codeGreen!20,  below=of raw]  (clean) {Transform $\to$ data\_lake/clean/ (CSV)};
+                \node[box, fill=alertRed!15,   below=of clean](neon)  {Load $\to$ Neon PostgreSQL 16};
+
+                \draw[->, thick] (src)   -- (raw);
+                \draw[->, thick] (raw)   -- (clean) node[midway, right] {6 transformers};
+                \draw[->, thick] (clean) -- (neon)  node[midway, right] {7 loaders (UPSERT)};
+            \end{tikzpicture}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \textbf{Loaded records (post-ETL):}
+            \vspace{0.3em}
+            \begin{tabular}{@{}lr@{}}
+                \toprule
+                \textbf{Table}        & \textbf{Records} \\
+                \midrule
+                labels                & 183 \\
+                artists               & 40 \\
+                albums                & 781 \\
+                tracks                & 250 \\
+                events                & 81 \\
+                revenue\_logs         & 3{,}180 \\
+                contracts             & 45 \\
+                contract\_splits      & 498 \\
+                artist\_wallets       & 22 \\
+                withdrawals           & 19 \\
+                \bottomrule
+            \end{tabular}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Views \& Materialized Views}
+% ----- Frame: Indexes + Views -----
+\begin{frame}{Indexes, Views \& Materialized Views}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{Views (real-time computed)}
-                \small
-                \tbl{v\_top\_artists}: \\
-                \quad Top artists by total plays \\
-
-                \vspace{0.5em}
-                \tbl{v\_top\_artists2}: \\
-                \quad Top artists by actual revenue
-            \end{block}
+        \begin{column}{0.50\textwidth}
+            \textbf{Key indexes:}
+            \begin{itemize}\scriptsize
+                \item \tbl{idx\_artists\_metadata\_gin} ---
+                      \textbf{GIN} on \tbl{artists.metadata} JSONB,
+                      supports \sql{@>} containment operator
+                \item \tbl{idx\_revlog\_track\_date} ---
+                      Composite B-Tree (\tbl{track\_id}, \tbl{log\_date}),
+                      enables partition pruning
+                \item \tbl{idx\_splits\_contract\_track} ---
+                      Composite for contract\_splits JOIN
+                \item \tbl{idx\_contracts\_active} ---
+                      \textbf{Partial} index (\texttt{status = 'active'})
+                \item \tbl{idx\_artists\_name\_lower} ---
+                      \textbf{Expression} index on \sql{LOWER(stage\_name)},
+                      supports case-insensitive ILIKE search
+            \end{itemize}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{alertblock}{Materialized View (cached)}
-                \small
-                \tbl{mv\_top\_artist\_cached}: \\
-                \quad Pre-computed ranking \\
-                \quad Faster query for Dashboard \\
-                \quad Periodic refresh:
-                \vspace{0.3em}
-
-                \texttt{\scriptsize REFRESH MATERIALIZED VIEW} \\
-                \texttt{\scriptsize mv\_top\_artist\_cached;}
-            \end{alertblock}
+        \begin{column}{0.46\textwidth}
+            \textbf{Views (real-time):}
+            \begin{itemize}\scriptsize
+                \item \tbl{v\_artist\_revenue\_summary}
+                \item \tbl{v\_contract\_split\_detail}
+            \end{itemize}
+            \vspace{0.4em}
+            \textbf{Materialized Views (cached):}
+            \begin{itemize}\scriptsize
+                \item \tbl{mv\_artist\_revenue\_summary}
+                \item \tbl{mv\_top\_tracks\_cached}
+                \item \tbl{mv\_monthly\_revenue\_by\_source}
+                \item \tbl{mv\_contract\_split\_summary}
+            \end{itemize}
+            \vspace{0.3em}
+            \begin{exampleblock}{}
+                \scriptsize Refresh all: \sql{CALL sp\_refresh\_all\_mv();}
+            \end{exampleblock}
         \end{column}
     \end{columns}
 \end{frame}
