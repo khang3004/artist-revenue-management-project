@@ -61,6 +61,15 @@ def run():
             md["mbid"] = r["mbid"]
         if pd.notna(r.get("country")):
             md["country"] = r["country"]
+        if pd.notna(r.get("genre")):
+            md["genre"] = r["genre"]
+        # Stable social links derived from stage_name (no randomness)
+        slug = r["stage_name"].lower().replace(" ", "").replace(".", "")
+        md["social_links"] = {
+            "instagram": f"https://instagram.com/{slug}",
+            "tiktok": f"https://tiktok.com/@{slug}",
+            "youtube": f"https://youtube.com/@{slug}",
+        }
 
         rows.append({
             "stage_name": r["stage_name"],

@@ -101,7 +101,7 @@ def run():
             "event_date": edate,
             "venue_id": vid,
             "manager_id": mid,
-            "status": r.get("status", "Scheduled"),
+            "status": str(r.get("status", "SCHEDULED")).upper(),
         })
 
         # Track artist link for event_performers
