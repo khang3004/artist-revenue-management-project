@@ -1,80 +1,115 @@
+% ============================================================
+% Section 5: Application Demo
+% ============================================================
 \section{Application Demo}
 
-\begin{frame}{Demo System Architecture}
-    \centering
-    \begin{tikzpicture}[
-        node distance=1.5cm,
-        box/.style={draw, rounded corners, minimum width=3cm, minimum height=1cm, align=center, font=\small},
-        arrow/.style={->, thick, >=stealth}
-    ]
-        \node[box, fill=blue!15] (user) {User \\ (Browser)};
-        \node[box, fill=green!15, right=2cm of user] (streamlit) {Streamlit \\ Dashboard};
-        \node[box, fill=orange!15, right=2cm of streamlit] (postgres) {PostgreSQL 16 \\ + pgvector};
-        \node[box, fill=gray!15, below=1cm of streamlit] (docker) {Docker Compose};
-
-        \draw[arrow] (user) -- node[above, font=\scriptsize] {:8501} (streamlit);
-        \draw[arrow] (streamlit) -- node[above, font=\scriptsize] {SQL / SP} (postgres);
-        \draw[arrow, dashed, gray] (docker.west) -| (streamlit);
-        \draw[arrow, dashed, gray] (docker.east) -| (postgres);
-    \end{tikzpicture}
-
-    \vspace{1em}
-    \small
-    Run everything with 1 command: \texttt{\highlight{docker compose up -d}}
+\begin{frame}{\secname}
+    \sectionCard{Application Demo}{Streamlit Dashboard \textbf{·} 5 Pages \textbf{·} 8 Stored Procedures}
 \end{frame}
 
-\begin{frame}{Dashboard -- Overview Statistics}
-    % TODO: Insert Streamlit Dashboard screenshot
-    \centering
-    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block body}
-        \large \textit{(Insert Dashboard screenshot here)}
-    \end{beamercolorbox}
-
-    \vspace{0.5em}
-    \small
-    \begin{columns}[c]
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Artists}{10}
-        \end{column}
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Tracks}{40+}
-        \end{column}
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Revenue}{500M+}
-        \end{column}
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Bookings}{15}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Revenue Charts \& PIVOT}
+% ----- Frame: Architecture -----
+\begin{frame}{System Architecture}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \centering
-            \textbf{Revenue by month (ROLLUP)} \\
-            \vspace{0.5em}
-            % TODO: Insert revenue chart screenshot
-            \begin{beamercolorbox}[sep=5pt, center, rounded=true]{block body}
-                \scriptsize \textit{(Screenshot of Plotly chart)}
-            \end{beamercolorbox}
+        \begin{column}{0.52\textwidth}
+            \begin{tikzpicture}[
+                node distance=0.85cm,
+                font=\scriptsize,
+                box/.style={draw, rounded corners, minimum width=3.5cm,
+                            minimum height=0.6cm, align=center}
+            ]
+                \node[box, fill=techBlue!15]    (user) {User (Browser)};
+                \node[box, fill=goldAccent!20, below=of user]  (st)   {Streamlit App (:8501)};
+                \node[box, fill=codeGreen!15,  below=of st]    (sp)   {8 Stored Procedures};
+                \node[box, fill=alertRed!15,   below=of sp]    (db)   {Neon Serverless PostgreSQL 16};
+
+                \draw[->, thick] (user) -- (st);
+                \draw[->, thick] (st)   -- (sp)
+                    node[midway, right] {\texttt{SELECT * FROM sp\_...()}};
+                \draw[->, thick] (sp)   -- (db)
+                    node[midway, right] {\texttt{RETURN TABLE}};
+            \end{tikzpicture}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \centering
-            \textbf{PIVOT: revenue source $\times$ artist} \\
-            \vspace{0.5em}
-            % TODO: Insert PIVOT table screenshot
-            \begin{beamercolorbox}[sep=5pt, center, rounded=true]{block body}
-                \scriptsize \textit{(Screenshot of crosstab table)}
-            \end{beamercolorbox}
+        \begin{column}{0.44\textwidth}
+            \textbf{5 dashboard pages:}
+            \begin{enumerate}\small
+                \item \textbf{Dashboard} --- KPIs + revenue overview
+                \item \textbf{Artists} --- Search + top earners
+                      \hfill \textit{\scriptsize (SP8, SP3)}
+                \item \textbf{Revenue Analytics} --- ROLLUP, PIVOT, Top tracks
+                      \hfill \textit{\scriptsize (SP1, SP2, SP5)}
+                \item \textbf{Finance} --- Contract splits + wallet audit
+                      \hfill \textit{\scriptsize (SP4, SP6)}
+                \item \textbf{Events \& Venues} --- Event statistics
+                      \hfill \textit{\scriptsize (SP7)}
+            \end{enumerate}
         \end{column}
     \end{columns}
+\end{frame}
 
-    \vspace{1em}
-    \centering
-    \small Data directly from \highlight{Stored Procedures} $\rightarrow$ Plotly charts
+% ----- Frame: Dashboard KPIs -----
+\begin{frame}{Dashboard --- Live Data (2025)}
+    \begin{columns}[T]
+        \begin{column}{0.55\textwidth}
+            \begin{figure}
+                \centering
+                % Place Streamlit screenshot at figures/dashboard_overview.png
+                \includegraphics[width=\textwidth, height=0.60\textheight,
+                                 keepaspectratio]{dashboard_overview}
+                \caption{Dashboard page --- Revenue Overview}
+            \end{figure}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \textbf{KPIs from loaded data:}
+            \vspace{0.5em}
+            \begin{columns}[T]
+                \begin{column}{0.48\textwidth}
+                    \kpiCard{0.95\textwidth}{Artists}{40}
+                    \vspace{0.3em}
+                    \kpiCard{0.95\textwidth}{Tracks}{250}
+                    \vspace{0.3em}
+                    \kpiCard{0.95\textwidth}{Wallets}{22}
+                \end{column}
+                \begin{column}{0.48\textwidth}
+                    \kpiCard{0.95\textwidth}{Rev. Logs}{3,180}
+                    \vspace{0.3em}
+                    \kpiCard{0.95\textwidth}{Contracts}{45}
+                    \vspace{0.3em}
+                    \kpiCard{0.95\textwidth}{Events}{81}
+                \end{column}
+            \end{columns}
+            \vspace{0.4em}
+            \scriptsize Data covers the last 12 months (2025--2026). \\
+            Default year selector: \textbf{2025}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ----- Frame: Revenue + Finance -----
+\begin{frame}{Revenue Analytics \& Finance Pages}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \centering
+            \textbf{Revenue Analytics}
+            \vspace{0.3em}
+            \begin{figure}
+                % Place screenshot at figures/revenue_analytics.png
+                \includegraphics[width=\textwidth, height=0.45\textheight,
+                                 keepaspectratio]{revenue_analytics}
+                \caption{SP1 ROLLUP + SP2 PIVOT + SP5 Top Tracks}
+            \end{figure}
+            \scriptsize Stacked bar: Streaming / Sync / Live per artist
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \textbf{Finance}
+            \vspace{0.3em}
+            \begin{figure}
+                % Place screenshot at figures/finance_page.png
+                \includegraphics[width=\textwidth, height=0.45\textheight,
+                                 keepaspectratio]{finance_page}
+                \caption{SP6 Wallet Audit --- balance vs.\ earnings}
+            \end{figure}
+            \scriptsize Audit status: OK / WARNING per artist
+        \end{column}
+    \end{columns}
 \end{frame}

@@ -1,113 +1,141 @@
+% ============================================================
+% Section 2: Conceptual Design (ERD)
+% ============================================================
 \section{Conceptual Design (ERD)}
 
-\begin{frame}{ERD Overview}
-    \textbf{13 entities} divided into 3 functional groups:
+\begin{frame}{\secname}
+    \sectionCard{Database Design}{19 Tables \textbf{·} 3 ISA Relationships \textbf{·} Polymorphic FK}
+\end{frame}
 
-    \vspace{0.5em}
+% ----- Frame: 19 tables overview -----
+\begin{frame}{Schema Overview --- 19 Tables, 4 Groups}
     \begin{columns}[T]
-        \begin{column}{0.33\textwidth}
-            \begin{alertblock}{\centering Core Entities}
-                \small
-                \begin{itemize}
-                    \item \tbl{artists} (cha)
-                    \item \tbl{solo\_artists} (con)
-                    \item \tbl{bands} (con)
-                    \item \tbl{labels}
-                    \item \tbl{albums}
-                    \item \tbl{tracks}
-                \end{itemize}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{\small Group 1 --- Core Entities (7 tables)}
+                \scriptsize
+                \tbl{labels}, \tbl{artists} \textit{(parent)} \\
+                \tbl{solo\_artists}, \tbl{bands}, \tbl{composers} \textit{(ISA children)} \\
+                \tbl{albums}, \tbl{tracks}
             \end{alertblock}
-        \end{column}
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering Revenue \& Contracts}
-                \small
-                \begin{itemize}
-                    \item \tbl{revenue\_logs}
-                    \item \tbl{contracts}
-                    \item \tbl{contract\_splits}
-                    \item \tbl{artist\_wallets}
-                \end{itemize}
+            \vspace{0.3em}
+            \begin{block}{\small Group 2 --- Contracts \& Splits (5 tables)}
+                \scriptsize
+                \tbl{contracts} \textit{(parent)} \\
+                \tbl{recording\_contracts}, \tbl{distribution\_contracts}, \\
+                \tbl{publishing\_contracts} \textit{(ISA children)} \\
+                \tbl{contract\_splits} \textit{(polymorphic FK)}
             \end{block}
         \end{column}
-        \begin{column}{0.33\textwidth}
-            \begin{exampleblock}{\centering Booking \& Venues}
-                \small
-                \begin{itemize}
-                    \item \tbl{bookings}
-                    \item \tbl{venues}
-                    \item \tbl{managers}
-                \end{itemize}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{\small Group 3 --- Revenue (6 tables)}
+                \scriptsize
+                \tbl{revenue\_logs} \textit{(parent, append-only, partitioned)} \\
+                \tbl{streaming\_revenue\_details} \\
+                \tbl{sync\_revenue\_details} \\
+                \tbl{live\_revenue\_details} \textit{(ISA children)} \\
+                \tbl{artist\_wallets}, \tbl{withdrawals}
+            \end{block}
+            \vspace{0.3em}
+            \begin{exampleblock}{\small Group 4 --- Events \& Venues (3 tables)}
+                \scriptsize
+                \tbl{events}, \tbl{venues}, \tbl{managers}
             \end{exampleblock}
         \end{column}
     \end{columns}
-
-    \vspace{0.5em}
+    \vspace{0.4em}
     \centering
-    \small \highlight{ISA Relationship (parent--child):} \tbl{artists} $\rightarrow$ \{\tbl{solo\_artists}, \tbl{bands}\} — disjoint, total participation
+    \small \textbf{Total: 19 tables} (13 core tables + 6 ISA child tables)
 \end{frame}
 
+% ----- Frame: ERD Diagram -----
 \begin{frame}{ERD Diagram}
     \centering
-    % TODO: Insert ERD figure exported from dbdiagram.io
-    % \includegraphics[width=0.95\textwidth]{figures/erd.png}
-
-    \vspace{1cm}
-    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block body}
-        \large \textit{(Insert ERD diagram here)} \\
-        \small Created with dbdiagram.io or draw.io, export as PNG
-    \end{beamercolorbox}
+    % Export docs/erd/music_royalty_ledger_ERD-Plain_ERD.drawio.svg
+    % to figures/erd.png (draw.io: File > Export As > PNG, scale 200%)
+    \includegraphics[width=0.93\textwidth, height=0.76\textheight, keepaspectratio]{erd}
+    \captionof{figure}{Entity-Relationship Diagram --- Artist Revenue Management System}
 \end{frame}
 
-\begin{frame}{ISA Relationship: artists $\rightarrow$ solo\_artists / bands}
+% ----- Frame: ISA Relationships -----
+\begin{frame}{ISA Relationships --- 3 Inheritance Hierarchies}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{Why ISA?}
-                \small
-                \begin{itemize}
-                    \item Solo artists and bands have \highlight{distinct attributes}
-                    \item Solo: main instrument, solo style
-                    \item Band: member count, formation date
-                    \item Shared: stage\_name, debut\_date, label\_id
-                \end{itemize}
+        \begin{column}{0.32\textwidth}
+            \begin{alertblock}{\small Artists ISA}
+                \centering \textbf{Overlapping, Partial}
+                \vspace{0.3em}
+
+                \scriptsize
+                An artist may hold \textbf{multiple roles simultaneously}
+                or belong to \textbf{none} (e.g.\ unclassified DJ)
+                \vspace{0.3em}
+
+                $\downarrow$ \tbl{solo\_artists} \\
+                $\downarrow$ \tbl{bands} \\
+                $\downarrow$ \tbl{composers}
+            \end{alertblock}
+        \end{column}
+        \begin{column}{0.32\textwidth}
+            \begin{block}{\small Contracts ISA}
+                \centering \textbf{Disjoint, Total}
+                \vspace{0.3em}
+
+                \scriptsize
+                Every contract \textbf{must} belong to exactly one type --- no overlap, no exceptions
+                \vspace{0.3em}
+
+                $\downarrow$ \tbl{recording\_contracts} \\
+                $\downarrow$ \tbl{distribution\_contracts} \\
+                $\downarrow$ \tbl{publishing\_contracts}
             \end{block}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{exampleblock}{Design}
-                \small
-                \tbl{artists} (parent): \\
-                \quad PK: artist\_id \\
-                \quad stage\_name, full\_name, debut\_date \\
-                \quad label\_id $\rightarrow$ FK labels \\
+        \begin{column}{0.32\textwidth}
+            \begin{block}{\small Revenue Logs ISA}
+                \centering \textbf{Disjoint, Total}
+                \vspace{0.3em}
 
-                \vspace{0.5em}
-                \tbl{solo\_artists} (child): \\
-                \quad PK/FK: artist\_id $\rightarrow$ artists \\
-                \quad instrument, solo\_style \\
+                \scriptsize
+                Every revenue entry belongs to exactly one source --- mandatory classification
+                \vspace{0.3em}
 
-                \vspace{0.5em}
-                \tbl{bands} (child): \\
-                \quad PK/FK: artist\_id $\rightarrow$ artists \\
-                \quad member\_count, formation\_date
-            \end{exampleblock}
+                $\downarrow$ \tbl{streaming\_revenue\_details} \\
+                $\downarrow$ \tbl{sync\_revenue\_details} \\
+                $\downarrow$ \tbl{live\_revenue\_details}
+            \end{block}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Main Relationships}
-    \small
-    \begin{tabular}{l l l}
-        \toprule
-        \textbf{Relationship} & \textbf{Cardinality} & \textbf{Description} \\
-        \midrule
-        artists $\rightarrow$ solo/bands & ISA (d, t) & Parent--child, disjoint, total \\
-        labels $\rightarrow$ artists     & 1:N         & Label manages multiple artists \\
-        artists $\rightarrow$ albums     & 1:N         & Artist releases multiple albums \\
-        albums $\rightarrow$ tracks      & 1:N         & Album contains multiple tracks \\
-        tracks $\leftarrow$ revenue\_logs & 1:N        & Track has multiple revenue logs \\
-        contracts $\leftrightarrow$ artists & M:N (via splits) & Contract splits across parties \\
-        artists $\rightarrow$ bookings   & 1:N         & Artist has multiple bookings \\
-        venues $\rightarrow$ bookings    & 1:N         & Venue hosts multiple shows \\
-        managers $\rightarrow$ bookings  & 1:N         & Manager handles multiple bookings \\
-        \bottomrule
-    \end{tabular}
+% ----- Frame: Constraints -----
+\begin{frame}{Integrity Constraints \& Business Rules}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            \textbf{Key technical constraints:}
+            \begin{itemize}\small
+                \item \tbl{tracks.isrc} --- \sql{UNIQUE NOT NULL VARCHAR(12)},
+                      international standard tracking code
+                \item \tbl{contracts.contract\_id} --- \sql{UUID} PK,
+                      prevents ID enumeration attacks
+                \item \tbl{artist\_wallets.balance} --- \sql{CHECK >= 0},
+                      balance never goes negative
+                \item \tbl{revenue\_logs} --- \textbf{Append-only},
+                      no \sql{UPDATE} or \sql{DELETE}
+                \item \tbl{contract\_splits} --- \sql{CHECK XOR(artist\_id, label\_id)},
+                      exactly one beneficiary
+                \item \tbl{bands.member\_count} --- \sql{CHECK >= 2}
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \textbf{Business rules:}
+            \begin{itemize}\small
+                \item \textbf{BR-01:} Total \tbl{share\_percentage}
+                      per (contract, track) $\leq$ 1.0 (100\%)
+                \item \textbf{BR-02:} Wallet balance only decreases when
+                      withdrawal \sql{status = 'completed'}
+                \item \textbf{BR-03:} Revenue logs are append-only ---
+                      corrections use a negative-amount reversal entry
+                \item \textbf{BR-05:} Live revenue \textbf{must} link
+                      to a valid \tbl{event\_id}
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
