@@ -62,6 +62,7 @@ def _run_load():
         "load.04_load_events",
         "load.05_load_revenue",
         "load.06_load_contracts",
+        "load.07_load_wallets",
     ]
     for mod_name in steps:
         try:

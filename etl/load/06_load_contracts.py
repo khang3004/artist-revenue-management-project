@@ -109,83 +109,89 @@ def run():
     df_bene = pd.read_csv(b_path)
     bene_id_remap = {}  # old CSV id → new DB id
 
-    with engine.begin() as conn:
-        for _, r in df_bene.iterrows():
-            old_id = int(r["beneficiary_id"])
-            btype = r["beneficiary_type"]
+    # Chunk beneficiary inserts to avoid Neon connection timeouts
+    CHUNK = 50
+    bene_rows = list(df_bene.iterrows())
+    for chunk_start in range(0, len(bene_rows), CHUNK):
+        chunk = bene_rows[chunk_start: chunk_start + CHUNK]
+        with engine.begin() as conn:
+            for _, r in chunk:
+                old_id = int(r["beneficiary_id"])
+                btype = r["beneficiary_type"]
 
-            # Insert beneficiary
-            result = conn.execute(
-                text("""
-                    INSERT INTO beneficiaries (beneficiary_type)
-                    VALUES (:btype)
-                    RETURNING beneficiary_id
-                """),
-                {"btype": btype},
-            )
-            new_id = result.fetchone()[0]
-            bene_id_remap[old_id] = new_id
+                result = conn.execute(
+                    text("""
+                        INSERT INTO beneficiaries (beneficiary_type)
+                        VALUES (:btype)
+                        RETURNING beneficiary_id
+                    """),
+                    {"btype": btype},
+                )
+                new_id = result.fetchone()[0]
+                bene_id_remap[old_id] = new_id
 
-            # Artist or Label sub-type
-            if btype == "A":
-                sn = r.get("artist_stage_name")
-                aid = artist_name_map.get(sn)
-                if aid:
-                    conn.execute(
-                        text("""
-                            INSERT INTO artist_beneficiaries (beneficiary_id, artist_id)
-                            VALUES (:bid, :aid)
-                            ON CONFLICT (beneficiary_id) DO NOTHING
-                        """),
-                        {"bid": new_id, "aid": aid},
-                    )
-            elif btype == "L":
-                ln = r.get("label_name")
-                lid = label_name_map.get(ln)
-                if lid:
-                    conn.execute(
-                        text("""
-                            INSERT INTO label_beneficiaries (beneficiary_id, label_id)
-                            VALUES (:bid, :lid)
-                            ON CONFLICT (beneficiary_id) DO NOTHING
-                        """),
-                        {"bid": new_id, "lid": lid},
-                    )
+                if btype == "A":
+                    sn = r.get("artist_stage_name")
+                    aid = artist_name_map.get(sn)
+                    if aid:
+                        conn.execute(
+                            text("""
+                                INSERT INTO artist_beneficiaries (beneficiary_id, artist_id)
+                                VALUES (:bid, :aid)
+                                ON CONFLICT (beneficiary_id) DO NOTHING
+                            """),
+                            {"bid": new_id, "aid": aid},
+                        )
+                elif btype == "L":
+                    ln = r.get("label_name")
+                    lid = label_name_map.get(ln)
+                    if lid:
+                        conn.execute(
+                            text("""
+                                INSERT INTO label_beneficiaries (beneficiary_id, label_id)
+                                VALUES (:bid, :lid)
+                                ON CONFLICT (beneficiary_id) DO NOTHING
+                            """),
+                            {"bid": new_id, "lid": lid},
+                        )
 
     print(f"  Inserted {len(df_bene)} beneficiaries")
 
     # ── Contract Splits ─────────────────────────────────────────────────────
     df_splits = pd.read_csv(s_path)
     split_count = 0
-    with engine.begin() as conn:
-        for _, r in df_splits.iterrows():
-            isrc = r.get("isrc")
-            tid = isrc_map.get(isrc)
-            if tid is None:
-                continue
+    split_rows = list(df_splits.iterrows())
+    for chunk_start in range(0, len(split_rows), CHUNK):
+        chunk = split_rows[chunk_start: chunk_start + CHUNK]
+        with engine.begin() as conn:
+            for _, r in chunk:
+                isrc = r.get("isrc")
+                tid = isrc_map.get(isrc)
+                if tid is None:
+                    continue
 
-            old_bene_id = int(r["beneficiary_id"])
-            new_bene_id = bene_id_remap.get(old_bene_id)
-            if new_bene_id is None:
-                continue
+                old_bene_id = int(r["beneficiary_id"])
+                new_bene_id = bene_id_remap.get(old_bene_id)
+                if new_bene_id is None:
+                    continue
 
-            conn.execute(
-                text("""
-                    INSERT INTO contract_splits
-                        (contract_id, track_id, beneficiary_id, share_percentage, role)
-                    VALUES (:cid, :tid, :bid, :pct, :role)
-                    ON CONFLICT (contract_id, track_id, beneficiary_id)
-                    DO UPDATE SET share_percentage = EXCLUDED.share_percentage
-                """),
-                {
-                    "cid": r["contract_id"],
-                    "tid": tid,
-                    "bid": new_bene_id,
-                    "pct": float(r["share_percentage"]),
-                    "role": r.get("role", "performer"),
-                },
-            )
-            split_count += 1
+                conn.execute(
+                    text("""
+                        INSERT INTO contract_splits
+                            (contract_id, track_id, beneficiary_id, share_percentage, role)
+                        VALUES (:cid, :tid, :bid, :pct, :role)
+                        ON CONFLICT (contract_id, track_id, beneficiary_id)
+                        DO UPDATE SET share_percentage = EXCLUDED.share_percentage
+                    """),
+                    {
+                        "cid": r["contract_id"],
+                        "tid": tid,
+                        "bid": new_bene_id,
+                        "pct": float(r["share_percentage"]),
+                        "role": r.get("role", "performer"),
+                    },
+                )
+                split_count += 1
 
     print(f"  Upserted {split_count} contract_splits")
     print("═══ Contracts load complete ═══\n")

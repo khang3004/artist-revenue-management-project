@@ -16,6 +16,18 @@ from config import MUSICBRAINZ_RAW, CLEAN_DIR
 
 import random
 
+# V-Pop genre pool — deterministically assigned from mbid so re-runs are stable
+_VPOP_GENRES = [
+    "V-Pop", "Ballad", "R&B", "Hip-hop", "Pop",
+    "EDM", "Indie", "Dance-Pop", "Alternative", "Folk",
+]
+
+
+def _assign_genre(mbid: str) -> str:
+    """Deterministic genre from mbid (no randomness → stable across re-runs)."""
+    seed = int(mbid.replace("-", "")[:8], 16)
+    return _VPOP_GENRES[seed % len(_VPOP_GENRES)]
+
 
 def _map_mb_type(mb_type: str | None) -> str:
     """Map MusicBrainz type → DB enum, injecting mock roles."""
@@ -100,6 +112,7 @@ def run():
                 "birthday": bday,
                 "label_name": label_name,
                 "country": art.get("country"),
+                "genre": _assign_genre(mbid),
             }
         )
 

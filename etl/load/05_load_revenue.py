@@ -42,78 +42,84 @@ def run():
     sync_count = 0
     live_count = 0
 
-    with engine.begin() as conn:
-        for _, r in df.iterrows():
-            rev_type = r.get("revenue_type")
-            isrc = r.get("isrc")
-            track_id = isrc_map.get(isrc) if isinstance(isrc, str) else None
+    # Process in chunks to avoid Neon serverless connection timeouts
+    CHUNK = 200
+    rows_list = list(df.iterrows())
 
-            # Insert parent revenue_log
-            result = conn.execute(
-                text("""
-                    INSERT INTO revenue_logs
-                        (track_id, source, amount, log_date, revenue_type, raw_data)
-                    VALUES (:track_id, :source, :amount, :log_date, :revenue_type, :raw_data)
-                    RETURNING log_id
-                """),
-                {
-                    "track_id": track_id,
-                    "source": r.get("source", "unknown"),
-                    "amount": float(r.get("amount", 0)),
-                    "log_date": r.get("log_date"),
-                    "revenue_type": rev_type,
-                    "raw_data": None,
-                },
-            )
-            log_id = result.fetchone()[0]
+    for chunk_start in range(0, len(rows_list), CHUNK):
+        chunk = rows_list[chunk_start: chunk_start + CHUNK]
+        with engine.begin() as conn:
+            for _, r in chunk:
+                rev_type = r.get("revenue_type")
+                isrc = r.get("isrc")
+                track_id = isrc_map.get(isrc) if isinstance(isrc, str) else None
 
-            # Insert ISA child
-            if rev_type == "STREAMING":
-                conn.execute(
+                # Insert parent revenue_log
+                result = conn.execute(
                     text("""
-                        INSERT INTO streaming_revenue_details
-                            (log_id, stream_count, per_stream_rate, platform)
-                        VALUES (:log_id, :stream_count, :per_stream_rate, :platform)
+                        INSERT INTO revenue_logs
+                            (track_id, source, amount, log_date, revenue_type, raw_data)
+                        VALUES (:track_id, :source, :amount, :log_date, :revenue_type, :raw_data)
+                        RETURNING log_id
                     """),
                     {
-                        "log_id": log_id,
-                        "stream_count": int(r.get("stream_count", 0)),
-                        "per_stream_rate": float(r.get("per_stream_rate", 0)),
-                        "platform": r.get("platform", "Unknown"),
+                        "track_id": track_id,
+                        "source": r.get("source", "unknown"),
+                        "amount": float(r.get("amount", 0)),
+                        "log_date": r.get("log_date"),
+                        "revenue_type": rev_type,
+                        "raw_data": None,
                     },
                 )
-                streaming_count += 1
+                log_id = result.fetchone()[0]
 
-            elif rev_type == "SYNC":
-                conn.execute(
-                    text("""
-                        INSERT INTO sync_revenue_details
-                            (log_id, licensee_name, usage_type)
-                        VALUES (:log_id, :licensee_name, :usage_type)
-                    """),
-                    {
-                        "log_id": log_id,
-                        "licensee_name": r.get("licensee_name", r.get("licenses_name", "Unknown")),
-                        "usage_type": r.get("usage_type", "Unknown"),
-                    },
-                )
-                sync_count += 1
+                # Insert ISA child
+                if rev_type == "STREAMING":
+                    conn.execute(
+                        text("""
+                            INSERT INTO streaming_revenue_details
+                                (log_id, stream_count, per_stream_rate, platform)
+                            VALUES (:log_id, :stream_count, :per_stream_rate, :platform)
+                        """),
+                        {
+                            "log_id": log_id,
+                            "stream_count": int(r.get("stream_count", 0)),
+                            "per_stream_rate": float(r.get("per_stream_rate", 0)),
+                            "platform": r.get("platform", "Unknown"),
+                        },
+                    )
+                    streaming_count += 1
 
-            elif rev_type == "LIVE":
-                eid = event_name_map.get(r.get("event_name"))
-                conn.execute(
-                    text("""
-                        INSERT INTO live_revenue_details
-                            (log_id, event_id, ticket_sold)
-                        VALUES (:log_id, :event_id, :ticket_sold)
-                    """),
-                    {
-                        "log_id": log_id,
-                        "event_id": eid,
-                        "ticket_sold": int(r.get("ticket_sold", 0)) if pd.notna(r.get("ticket_sold")) else None,
-                    },
-                )
-                live_count += 1
+                elif rev_type == "SYNC":
+                    conn.execute(
+                        text("""
+                            INSERT INTO sync_revenue_details
+                                (log_id, licensee_name, usage_type)
+                            VALUES (:log_id, :licensee_name, :usage_type)
+                        """),
+                        {
+                            "log_id": log_id,
+                            "licensee_name": r.get("licensee_name", r.get("licenses_name", "Unknown")),
+                            "usage_type": r.get("usage_type", "Unknown"),
+                        },
+                    )
+                    sync_count += 1
+
+                elif rev_type == "LIVE":
+                    eid = event_name_map.get(r.get("event_name"))
+                    conn.execute(
+                        text("""
+                            INSERT INTO live_revenue_details
+                                (log_id, event_id, ticket_sold)
+                            VALUES (:log_id, :event_id, :ticket_sold)
+                        """),
+                        {
+                            "log_id": log_id,
+                            "event_id": eid,
+                            "ticket_sold": int(r.get("ticket_sold", 0)) if pd.notna(r.get("ticket_sold")) else None,
+                        },
+                    )
+                    live_count += 1
 
     print(f"  Loaded {streaming_count} streaming + {sync_count} sync + {live_count} live = {streaming_count + sync_count + live_count} total")
     print("═══ Revenue load complete ═══\n")
