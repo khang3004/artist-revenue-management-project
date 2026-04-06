@@ -18,8 +18,16 @@ import random
 
 # V-Pop genre pool — deterministically assigned from mbid so re-runs are stable
 _VPOP_GENRES = [
-    "V-Pop", "Ballad", "R&B", "Hip-hop", "Pop",
-    "EDM", "Indie", "Dance-Pop", "Alternative", "Folk",
+    "V-Pop",
+    "Ballad",
+    "R&B",
+    "Hip-hop",
+    "Pop",
+    "EDM",
+    "Indie",
+    "Dance-Pop",
+    "Alternative",
+    "Folk",
 ]
 
 

@@ -9,6 +9,7 @@ Load Step 6: Load Contracts, Beneficiaries, and Contract Splits
 import pandas as pd
 from sqlalchemy import text
 import sys, os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import CLEAN_DIR
 from load.loader import get_engine, execute_sql
@@ -29,7 +30,9 @@ def run():
 
     # ── Build lookup maps ───────────────────────────────────────────────────
     with engine.connect() as conn:
-        rows = conn.execute(text("SELECT artist_id, stage_name FROM artists")).fetchall()
+        rows = conn.execute(
+            text("SELECT artist_id, stage_name FROM artists")
+        ).fetchall()
     artist_name_map = {r[1]: r[0] for r in rows}
 
     with engine.connect() as conn:
@@ -55,7 +58,9 @@ def run():
                     "contract_id": r["contract_id"],
                     "name": r["name"],
                     "start_date": r.get("start_date"),
-                    "end_date": r.get("end_date") if pd.notna(r.get("end_date")) else None,
+                    "end_date": r.get("end_date")
+                    if pd.notna(r.get("end_date"))
+                    else None,
                     "contract_type": r.get("contract_type", "recording"),
                     "status": r.get("status", "active"),
                 },
@@ -74,7 +79,7 @@ def run():
                         "cid": r["contract_id"],
                         "adv": r.get("advance_amount"),
                         "qty": r.get("album_commitment_quantity"),
-                        "yrs": r.get("exclusivity_years")
+                        "yrs": r.get("exclusivity_years"),
                     },
                 )
             elif ctype == "distribution":
@@ -87,7 +92,7 @@ def run():
                     {
                         "cid": r["contract_id"],
                         "ter": r.get("territory", "Global"),
-                        "fee": float(r.get("distribution_fee_pct", 0.15))
+                        "fee": float(r.get("distribution_fee_pct", 0.15)),
                     },
                 )
             elif ctype == "publishing":
@@ -100,7 +105,7 @@ def run():
                     {
                         "cid": r["contract_id"],
                         "own": r.get("copyright_owner", "Unknown"),
-                        "sync": bool(r.get("sync_rights_included", False))
+                        "sync": bool(r.get("sync_rights_included", False)),
                     },
                 )
     print(f"  Upserted {len(df_contracts)} contracts")
@@ -113,7 +118,7 @@ def run():
     CHUNK = 50
     bene_rows = list(df_bene.iterrows())
     for chunk_start in range(0, len(bene_rows), CHUNK):
-        chunk = bene_rows[chunk_start: chunk_start + CHUNK]
+        chunk = bene_rows[chunk_start : chunk_start + CHUNK]
         with engine.begin() as conn:
             for _, r in chunk:
                 old_id = int(r["beneficiary_id"])
@@ -162,7 +167,7 @@ def run():
     split_count = 0
     split_rows = list(df_splits.iterrows())
     for chunk_start in range(0, len(split_rows), CHUNK):
-        chunk = split_rows[chunk_start: chunk_start + CHUNK]
+        chunk = split_rows[chunk_start : chunk_start + CHUNK]
         with engine.begin() as conn:
             for _, r in chunk:
                 isrc = r.get("isrc")

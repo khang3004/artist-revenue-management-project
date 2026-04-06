@@ -40,10 +40,7 @@ st.dataframe(df)
 
 if not df.empty:
     fig = px.bar(
-        df,
-        x="nghe_si",
-        y=["streaming", "sync_rev", "live_rev"],
-        barmode="stack"
+        df, x="nghe_si", y=["streaming", "sync_rev", "live_rev"], barmode="stack"
     )
     st.plotly_chart(fig)
 

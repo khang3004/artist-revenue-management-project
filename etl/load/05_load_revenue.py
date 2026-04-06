@@ -10,6 +10,7 @@ import pandas as pd
 from sqlalchemy import text
 import json
 import sys, os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import CLEAN_DIR
 from load.loader import get_engine
@@ -33,9 +34,7 @@ def run():
 
     # Build event_name → event_id map (for live revenue)
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("SELECT event_id, event_name FROM events")
-        ).fetchall()
+        rows = conn.execute(text("SELECT event_id, event_name FROM events")).fetchall()
     event_name_map = {r[1]: r[0] for r in rows}
 
     streaming_count = 0
@@ -47,7 +46,7 @@ def run():
     rows_list = list(df.iterrows())
 
     for chunk_start in range(0, len(rows_list), CHUNK):
-        chunk = rows_list[chunk_start: chunk_start + CHUNK]
+        chunk = rows_list[chunk_start : chunk_start + CHUNK]
         with engine.begin() as conn:
             for _, r in chunk:
                 rev_type = r.get("revenue_type")
@@ -99,7 +98,9 @@ def run():
                         """),
                         {
                             "log_id": log_id,
-                            "licensee_name": r.get("licensee_name", r.get("licenses_name", "Unknown")),
+                            "licensee_name": r.get(
+                                "licensee_name", r.get("licenses_name", "Unknown")
+                            ),
                             "usage_type": r.get("usage_type", "Unknown"),
                         },
                     )
@@ -116,12 +117,16 @@ def run():
                         {
                             "log_id": log_id,
                             "event_id": eid,
-                            "ticket_sold": int(r.get("ticket_sold", 0)) if pd.notna(r.get("ticket_sold")) else None,
+                            "ticket_sold": int(r.get("ticket_sold", 0))
+                            if pd.notna(r.get("ticket_sold"))
+                            else None,
                         },
                     )
                     live_count += 1
 
-    print(f"  Loaded {streaming_count} streaming + {sync_count} sync + {live_count} live = {streaming_count + sync_count + live_count} total")
+    print(
+        f"  Loaded {streaming_count} streaming + {sync_count} sync + {live_count} live = {streaming_count + sync_count + live_count} total"
+    )
     print("═══ Revenue load complete ═══\n")
 
 

@@ -47,8 +47,7 @@ cols, rows = execute_query(query)
 df = pd.DataFrame(rows if rows else [], columns=cols if cols else [])
 
 if not df.empty:
-
-    col1, col2 = st.columns([2,1])
+    col1, col2 = st.columns([2, 1])
 
     with col1:
         fig = px.bar(
@@ -56,21 +55,15 @@ if not df.empty:
             x="nghe_si",
             y="tong_doanhthu",
             title="Top Artists Revenue",
-            text_auto=True
+            text_auto=True,
         )
 
-        fig.update_layout(
-            xaxis_title="Artist",
-            yaxis_title="Revenue (VND)"
-        )
+        fig.update_layout(xaxis_title="Artist", yaxis_title="Revenue (VND)")
 
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        st.dataframe(
-            df,
-            use_container_width=True
-        )
+        st.dataframe(df, use_container_width=True)
 
 else:
     st.warning("⚠️ No data found for this year.")
@@ -95,17 +88,11 @@ cols, rows = execute_query(query)
 df_month = pd.DataFrame(rows if rows else [], columns=cols if cols else [])
 
 if not df_month.empty:
-
     fig = px.line(
-        df_month,
-        x="month",
-        y="revenue",
-        markers=True,
-        title="Monthly Revenue"
+        df_month, x="month", y="revenue", markers=True, title="Monthly Revenue"
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.info("No monthly data available.")
- 
