@@ -64,7 +64,7 @@ BEGIN
              ORDER BY a.stage_name, rt.source_type',
             'SELECT log_id, track_id, amount, log_date, source_type FROM revenue_typed'
         ),
-        $$SELECT unnest(ARRAY['live', 'streaming', 'sync'])$$
+        $q$SELECT unnest(ARRAY['live', 'streaming', 'sync'])$q$
     ) AS ct(nghe_si VARCHAR, live NUMERIC, streaming NUMERIC, sync NUMERIC)
     ORDER BY tong DESC;
 END; $$;
