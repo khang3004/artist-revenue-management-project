@@ -6,14 +6,18 @@ MDL018 - Data Organization and Management
 import streamlit as st
 import os
 from utils.db import get_db_connection, test_connection
+from utils.ui import apply_apple_style
 
 # Page configuration
 st.set_page_config(
-    page_title="Artist Revenue Management",
+    page_title="V-POP Artist Revenue",
     page_icon="🎵",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Apply Apple Liquid Glass Style
+apply_apple_style()
 
 # Custom CSS
 def load_css():

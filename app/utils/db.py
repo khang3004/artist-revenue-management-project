@@ -70,6 +70,7 @@ def test_connection():
         return False
 
 
+@st.cache_data(ttl=60)
 def execute_query(query, params=None):
     """
     Execute SELECT query and return results
