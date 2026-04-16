@@ -22,9 +22,20 @@ def get_db_connection():
         if not database_url:
             raise Exception("DATABASE_URL environment variable not set")
 
+        # Determine SSL mode: 
+        # 1. Use DB_SSL_MODE if defined
+        # 2. Use "require" if it's a Neon URL
+        # 3. Default to "disable" for local Docker
+        ssl_mode = os.getenv("DB_SSL_MODE")
+        if not ssl_mode:
+            if "neon.tech" in database_url:
+                ssl_mode = "require"
+            else:
+                ssl_mode = "disable"
+
         conn = psycopg2.connect(
             database_url,
-            sslmode="require"
+            sslmode=ssl_mode
         )
         conn.autocommit = True
 
