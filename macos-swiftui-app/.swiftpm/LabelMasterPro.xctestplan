@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "53EACE63-6B03-4D8F-8B14-590DDAFF0C4F",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:",
+      "identifier" : "ArtistRevenueMacApp",
+      "name" : "ArtistRevenueMacApp"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "LabelMasterProTests",
+        "name" : "LabelMasterProTests"
+      }
+    }
+  ],
+  "version" : 1
+}
