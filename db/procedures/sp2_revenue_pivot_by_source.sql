@@ -1,12 +1,6 @@
 -- ============================================================
--- MDL018 — HỆ THỐNG QUẢN LÝ DOANH THU NGHỆ SĨ V-POP
--- SP2: PIVOT DOANH THU THEO NGUỒN × NGHỆ SĨ (crosstab)
--- ============================================================
--- Tận dụng:
---   • Partition pruning trên revenue_logs
---   • ISA tables: streaming_revenue_details, sync_revenue_details, live_revenue_details
---     xác định source_type (disjoint, total)
---   • idx_revlog_track_date (Composite) cho JOIN + filter
+-- SP2: PIVOT DOANH THU THEO NGUỒN × NGHỆ SĨ (crosstab + FILTER)
+-- Synced from: ALL_STORED_PROCEDURES.md
 -- ============================================================
 CREATE EXTENSION IF NOT EXISTS tablefunc;
 
@@ -23,24 +17,18 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     WITH revenue_typed AS (
-        -- CTE xác định source_type từ ISA tables
-        -- Mỗi log_id chỉ xuất hiện ở đúng 1 bảng con (disjoint, total)
         SELECT r.log_id, r.track_id, r.amount, r.log_date, 'streaming' AS source_type
         FROM revenue_logs r
         INNER JOIN streaming_revenue_details rs ON r.log_id = rs.log_id
         WHERE r.log_date >= make_date(p_year, 1, 1)
           AND r.log_date < make_date(p_year + 1, 1, 1)
-
         UNION ALL
-
         SELECT r.log_id, r.track_id, r.amount, r.log_date, 'sync'
         FROM revenue_logs r
         INNER JOIN sync_revenue_details rsn ON r.log_id = rsn.log_id
         WHERE r.log_date >= make_date(p_year, 1, 1)
           AND r.log_date < make_date(p_year + 1, 1, 1)
-
         UNION ALL
-
         SELECT r.log_id, r.track_id, r.amount, r.log_date, 'live'
         FROM revenue_logs r
         INNER JOIN live_revenue_details rl ON r.log_id = rl.log_id
@@ -69,9 +57,7 @@ BEGIN
     ORDER BY tong DESC;
 END; $$;
 
--- NOTE: crosstab + CTE có thể gặp khó khăn.
--- Alternative đơn giản hơn dùng conditional aggregation:
-
+-- Alternative: conditional aggregation (FILTER)
 CREATE OR REPLACE FUNCTION sp_revenue_pivot_by_source_v2(
     p_year INT DEFAULT 2024
 )
@@ -86,7 +72,6 @@ BEGIN
     RETURN QUERY
     SELECT
         a.stage_name::VARCHAR                                              AS nghe_si,
-        -- PIVOT bằng conditional aggregation (tương đương crosstab)
         SUM(r.amount) FILTER (
             WHERE EXISTS (SELECT 1 FROM streaming_revenue_details rs WHERE rs.log_id = r.log_id)
         )                                                                  AS streaming,
@@ -107,5 +92,5 @@ BEGIN
     ORDER BY tong DESC;
 END; $$;
 
--- Gọi:
+-- Sample call:
 -- SELECT * FROM sp_revenue_pivot_by_source_v2(2024);
