@@ -1,5 +1,5 @@
 // RevenueLog.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain models for revenue data: raw log entries, aggregated monthly rollups,
 // pivot rows, and the top-earner leaderboard — all consumed by the Dashboard.

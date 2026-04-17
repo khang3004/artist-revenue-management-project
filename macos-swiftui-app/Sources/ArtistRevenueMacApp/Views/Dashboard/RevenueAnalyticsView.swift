@@ -1,5 +1,5 @@
 // RevenueAnalyticsView.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Revenue Analytics module: artist×month rollup table (SP1),
 // source pivot stacked bar (SP2), and top tracks table — mirrors Streamlit page 3.
@@ -14,6 +14,7 @@ struct RevenueAnalyticsView: View {
     private let availableYears = [2023, 2024, 2025, 2026]
     @State private var selectedYear: Int = Calendar.current.component(.year, from: Date.now)
     @State private var chartAnimated = false
+    @State private var selectedDate: Date?
 
     var body: some View {
         ScrollView {
@@ -83,19 +84,23 @@ struct RevenueAnalyticsView: View {
                             y: .value("Streaming", chartAnimated ? pivot.streamingAmount : 0)
                         )
                         .foregroundStyle(Brand.teal).cornerRadius(3)
+                        .opacity(selectedDate == nil || Calendar.current.isDate(pivot.month, equalTo: selectedDate!, toGranularity: .month) ? 1.0 : 0.4)
 
                         BarMark(
                             x: .value("Month", pivot.month, unit: .month),
                             y: .value("Sync",  chartAnimated ? pivot.syncAmount : 0)
                         )
                         .foregroundStyle(Brand.amber).cornerRadius(3)
+                        .opacity(selectedDate == nil || Calendar.current.isDate(pivot.month, equalTo: selectedDate!, toGranularity: .month) ? 1.0 : 0.4)
 
                         BarMark(
                             x: .value("Month", pivot.month, unit: .month),
                             y: .value("Live",  chartAnimated ? pivot.liveAmount : 0)
                         )
                         .foregroundStyle(Brand.emerald).cornerRadius(3)
+                        .opacity(selectedDate == nil || Calendar.current.isDate(pivot.month, equalTo: selectedDate!, toGranularity: .month) ? 1.0 : 0.4)
                     }
+                    .chartXSelection(value: $selectedDate)
                     .chartXAxis {
                         AxisMarks(values: .stride(by: .month, count: 1)) { _ in
                             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Brand.border)
@@ -109,6 +114,34 @@ struct RevenueAnalyticsView: View {
                             AxisValueLabel {
                                 if let d = v.as(Double.self) {
                                     Text(abbreviate(d)).font(.system(size: 10)).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .chartOverlay { proxy in
+                        GeometryReader { geo in
+                            if let selectedDate = selectedDate,
+                               let xPosition = proxy.position(forX: selectedDate) {
+                                // Find selected data
+                                if let pivot = vm.pivotData.first(where: { Calendar.current.isDate($0.month, equalTo: selectedDate, toGranularity: .month) }) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(pivot.month.formatted(.dateTime.month(.wide).year()))
+                                            .font(.system(size: 12, weight: .bold))
+                                        Text("Stream: \(formatCurrency(pivot.streamingAmount))")
+                                            .font(.system(size: 11)).foregroundStyle(Brand.teal)
+                                        Text("Sync: \(formatCurrency(pivot.syncAmount))")
+                                            .font(.system(size: 11)).foregroundStyle(Brand.amber)
+                                        Text("Live: \(formatCurrency(pivot.liveAmount))")
+                                            .font(.system(size: 11)).foregroundStyle(Brand.emerald)
+                                        Text("Total: \(formatCurrency(pivot.totalAmount))")
+                                            .font(.system(size: 11, weight: .bold))
+                                    }
+                                    .padding(10)
+                                    .background(.regularMaterial)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    .shadow(radius: 6)
+                                    .position(x: xPosition, y: geo.size.height / 2)
+                                    .offset(x: xPosition > geo.size.width / 2 ? -70 : 70) // Prevent going off-screen
                                 }
                             }
                         }

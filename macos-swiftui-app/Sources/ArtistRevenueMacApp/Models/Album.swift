@@ -1,5 +1,5 @@
 // Album.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `albums` table defined in V1__Core_Entities.sql.
 

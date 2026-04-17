@@ -1,5 +1,5 @@
-// LabelMasterProTests.swift
-// LabelMaster Pro
+// AmplifyCoreTests.swift
+// Amplify Core
 //
 // Placeholder test target. Expand with unit tests for repositories and ViewModels
 // using a mock DatabaseClient that returns seed fixtures.
@@ -7,7 +7,7 @@
 import XCTest
 @testable import ArtistRevenueMacApp
 
-/// Placeholder test suite for LabelMaster Pro.
+/// Placeholder test suite for Amplify Core.
 ///
 /// ### Recommended Test Strategy
 /// - **Unit Tests**: Mock `DatabaseClient` with a closure-injection strategy to return
@@ -15,7 +15,7 @@ import XCTest
 /// - **ViewModel Tests**: Inject mock repositories and assert that `DashboardViewModel.loadAll()`
 ///   correctly propagates data to published properties.
 /// - **Integration Tests**: Run against a dedicated test Docker container with known seed data.
-final class LabelMasterProTests: XCTestCase {
+final class AmplifyCoreTests: XCTestCase {
 
     /// Verifies that `ArtistRole.displayName` returns a non-empty string for every case.
     func testArtistRoleDisplayNames() {

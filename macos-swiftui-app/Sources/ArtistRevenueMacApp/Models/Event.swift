@@ -1,5 +1,5 @@
 // Event.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `events` and `venues` tables defined in V4__Events_and_Venues.sql.
 

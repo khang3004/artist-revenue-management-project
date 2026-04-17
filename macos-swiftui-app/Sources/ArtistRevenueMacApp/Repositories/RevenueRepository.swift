@@ -1,5 +1,5 @@
 // RevenueRepository.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Data-access layer for the `revenue_logs` fact table and its ISA sub-type tables.
 // Implements monthly rollup, pivot, top-earner, and wallet-summary queries —

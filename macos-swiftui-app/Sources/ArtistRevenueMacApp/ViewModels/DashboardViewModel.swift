@@ -1,5 +1,5 @@
 // DashboardViewModel.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Observable ViewModel that drives the RevenueRollUpView dashboard.
 // Fetches rollup, pivot, and top-earner data concurrently via async let.
@@ -44,6 +44,12 @@ final class DashboardViewModel {
 
     /// Non-nil when a database operation has failed; drives the `.alert` modifier.
     var errorMessage: String? = nil
+
+    /// Predicted revenue for the upcoming month using OLS regression.
+    var forecastedRevenue: Double = 0.0
+
+    /// Calculated plus/minus variance in the forecast based on historical residuals.
+    var forecastedVariance: Double = 0.0
 
     // MARK: - Computed Presentation Properties
 
@@ -125,11 +131,60 @@ final class DashboardViewModel {
             self.chartSeries = series
             self.pivotData   = pivot
             self.topEarners  = earners
+            
+            self.calculateAIForecast()
         } catch {
             self.errorMessage = error.localizedDescription
         }
 
         isLoading = false
+    }
+
+    /// Extrapolates revenue for the next 30 days using an Ordinary Least Squares (OLS)
+    /// linear regression mathematical baseline over the loaded historical pivot data.
+    private func calculateAIForecast() {
+        guard pivotData.count >= 2 else {
+            forecastedRevenue = 0
+            forecastedVariance = 0
+            return
+        }
+        
+        let sortedPivot = pivotData.sorted { $0.month < $1.month }
+        let n = Double(sortedPivot.count)
+        
+        // x represents the month index (1...n), y represents total revenue
+        let xValues = (1...sortedPivot.count).map { Double($0) }
+        let yValues = sortedPivot.map { $0.totalAmount }
+        
+        let meanX = xValues.reduce(0, +) / n
+        let meanY = yValues.reduce(0, +) / n
+        
+        var numerator = 0.0
+        var denominator = 0.0
+        
+        for i in 0..<sortedPivot.count {
+            let xDiff = xValues[i] - meanX
+            let yDiff = yValues[i] - meanY
+            numerator += xDiff * yDiff
+            denominator += xDiff * xDiff
+        }
+        
+        let slope = denominator != 0 ? numerator / denominator : 0
+        let intercept = meanY - (slope * meanX)
+        
+        // Predict next month (x = n + 1)
+        let rawPrediction = slope * (n + 1) + intercept
+        self.forecastedRevenue = max(0, rawPrediction) // Floor at 0
+        
+        // Calculate basic variance (Root Mean Square Error bounds)
+        var sumSquaredResiduals = 0.0
+        for i in 0..<sortedPivot.count {
+            let predictedY = slope * xValues[i] + intercept
+            let residual = yValues[i] - predictedY
+            sumSquaredResiduals += (residual * residual)
+        }
+        let rmse = sqrt(sumSquaredResiduals / n)
+        self.forecastedVariance = rmse
     }
 
     /// Clears all cached data and re-fetches from scratch.

@@ -1,5 +1,5 @@
 // EventsViewModel.swift
-// LabelMaster Pro
+// Amplify Core
 
 import Foundation
 import Observation

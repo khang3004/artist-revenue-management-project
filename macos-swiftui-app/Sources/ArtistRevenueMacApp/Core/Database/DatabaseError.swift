@@ -1,5 +1,5 @@
 // DatabaseError.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Defines the canonical set of error cases that can originate from the
 // database interaction layer and are ultimately surfaced to the UI as alerts.

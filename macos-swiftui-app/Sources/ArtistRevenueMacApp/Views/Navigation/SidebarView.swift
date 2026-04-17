@@ -1,5 +1,5 @@
 // SidebarView.swift
-// LabelMaster Pro — macOS 26 Liquid Glass Sidebar
+// Amplify Core — macOS 26 Liquid Glass Sidebar
 //
 // Key Apple guidelines followed:
 //   • Do NOT set custom backgrounds on NavigationSplitView sidebars.
@@ -39,6 +39,8 @@ struct SidebarView: View {
                                 .symbolRenderingMode(selection == module ? .multicolor : .hierarchical)
                                 .foregroundStyle(selection == module ? Brand.primary : .secondary)
                                 .font(.system(size: 14, weight: selection == module ? .bold : .medium))
+                                .symbolEffect(.pulse, isActive: selection == module)
+                                .symbolEffect(.bounce, value: selection)
                         }
                         .tag(module)
                         .padding(.vertical, 4)
@@ -92,9 +94,9 @@ struct SidebarView: View {
                 )
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("LabelMaster")
+                Text("Amplify")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                Text("Pro")
+                Text("Core")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Brand.primary)
             }

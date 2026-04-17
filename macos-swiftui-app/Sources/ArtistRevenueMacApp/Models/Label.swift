@@ -1,5 +1,5 @@
 // RecordLabel.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `labels` table defined in V1__Core_Entities.sql.
 // Named `RecordLabel` (not `Label`) to avoid shadowing SwiftUI's built-in `Label` view.

@@ -1,5 +1,5 @@
 // ArtistDirectoryView.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Full CRUD management interface for artists: searchable list panel + detail panel
 // with biography, role badges, contract log, and Add/Delete operations.
@@ -28,19 +28,51 @@ import SwiftUI
 struct ArtistDirectoryView: View {
 
     @Environment(ArtistDirectoryViewModel.self) private var viewModel
+    @State private var artistForDetail: Artist? = nil
+    @State private var layoutMode: LayoutMode = .list
+
+    enum LayoutMode {
+        case list
+        case gallery
+    }
 
     var body: some View {
-        HStack(spacing: 0) {
-            ArtistListPanel()
-                .frame(width: 300)
-                .environment(viewModel)
+        VStack(spacing: 0) {
+            // View Switcher Header
+            HStack {
+                Text("Catalogue Layout")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                Spacer()
+                Picker("", selection: $layoutMode) {
+                    Label("List", systemImage: "list.bullet").tag(LayoutMode.list)
+                    Label("Gallery", systemImage: "square.grid.2x2").tag(LayoutMode.gallery)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 160)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial.opacity(0.5))
 
-            Divider()
-
-            ArtistDetailPanel()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .environment(viewModel)
+            HStack(spacing: 0) {
+                if layoutMode == .list {
+                    ArtistListPanel()
+                        .frame(width: 300)
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                    
+                    Divider()
+                    
+                    ArtistDetailPanel(artistForDetail: $artistForDetail)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ArtistGalleryGrid(artistForDetail: $artistForDetail)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: layoutMode)
         }
+        .environment(viewModel)
         .task { await viewModel.loadArtists() }
         // Error alert
         .alert(
@@ -82,6 +114,10 @@ struct ArtistDirectoryView: View {
         )) {
             AddArtistSheet()
                 .environment(viewModel)
+        }
+        // Deep profile modal sheet
+        .sheet(item: $artistForDetail) { artist in
+            ArtistDetailView(artist: artist, vm: viewModel)
         }
     }
 }
@@ -243,11 +279,12 @@ private struct ArtistRowCell: View {
 /// biographical grid, and associated contracts list.
 private struct ArtistDetailPanel: View {
 
+    @Binding var artistForDetail: Artist?
     @Environment(ArtistDirectoryViewModel.self) private var viewModel
 
     var body: some View {
         if let artist: Artist = viewModel.selectedArtist {
-            ArtistProfileView(artist: artist, contracts: viewModel.artistContracts)
+            ArtistProfileView(artist: artist, contracts: viewModel.artistContracts, artistForDetail: $artistForDetail)
         } else {
             ContentUnavailableView(
                 "No Artist Selected",
@@ -266,6 +303,7 @@ private struct ArtistProfileView: View {
 
     let artist: Artist
     let contracts: [Contract]
+    @Binding var artistForDetail: Artist?
 
     @State private var appeared: Bool = false
 
@@ -350,6 +388,14 @@ private struct ArtistProfileView: View {
                         )
                     }
                     metaStat(label: "Artist ID", value: "#\(artist.id)")
+                    
+                    Spacer()
+                    
+                    Button("Deep Profile") {
+                        artistForDetail = artist
+                    }
+                    .buttonStyle(.glass)
+                    .controlSize(.small)
                 }
             }
         }
@@ -569,5 +615,72 @@ private struct AddArtistSheet: View {
             }
         }
         .frame(width: 480, height: 370)
+    }
+}
+// MARK: - Artist Gallery Grid
+
+/// A visual grid of artists displayed as "Profile Cards" with glass effects.
+private struct ArtistGalleryGrid: View {
+    @Environment(ArtistDirectoryViewModel.self) private var viewModel
+    @Binding var artistForDetail: Artist?
+
+    private let columns = [
+        GridItem(.adaptive(minimum: 200, maximum: 260), spacing: 20)
+    ]
+
+    var body: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 24) {
+                ForEach(viewModel.filteredArtists) { artist in
+                    ArtistGalleryCard(artist: artist)
+                        .onTapGesture {
+                            artistForDetail = artist
+                        }
+                }
+            }
+            .padding(24)
+        }
+        .background(Brand.primary.opacity(0.02))
+    }
+}
+
+private struct ArtistGalleryCard: View {
+    let artist: Artist
+
+    var body: some View {
+        GlassCard(cornerRadius: 24, padding: 0) {
+            VStack(spacing: 16) {
+                // Large Avatar
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: [Brand.primary, Brand.secondary], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 80, height: 80)
+                    Text(String(artist.stageName.prefix(1)).uppercased())
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+                .padding(.top, 24)
+
+                VStack(spacing: 4) {
+                    Text(artist.stageName)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                    
+                    if let role = artist.roles.first?.displayName {
+                        Text(role)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .foregroundStyle(Brand.primary)
+                    Text("View Detail")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .padding(.bottom, 20)
+            }
+        }
     }
 }

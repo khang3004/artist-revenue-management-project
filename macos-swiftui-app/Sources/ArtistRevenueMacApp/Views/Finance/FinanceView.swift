@@ -1,5 +1,5 @@
 // FinanceView.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Finance & Contracts module: contract payout table (SP4),
 // top tracks per artist chart (SP5), and wallet audit report (SP6).

@@ -1,5 +1,5 @@
 // ArtistRepository.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Data-access layer for `artists`, `artist_roles`, and `labels` tables.
 // Provides CRUD operations and a full-text search backed by sp8_search_artists logic.

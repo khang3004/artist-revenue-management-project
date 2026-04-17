@@ -1,5 +1,5 @@
 // FinanceRepository.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Data-access layer for Finance module: contract revenue distribution (SP4),
 // top tracks per artist (SP5), and wallet audit report (SP6).

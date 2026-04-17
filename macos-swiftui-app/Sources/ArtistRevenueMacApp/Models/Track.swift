@@ -1,5 +1,5 @@
 // Track.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `tracks` table defined in V1__Core_Entities.sql.
 

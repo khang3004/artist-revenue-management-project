@@ -1,5 +1,5 @@
 // RevenueRollUpView.swift
-// LabelMaster Pro — Revenue Dashboard (macOS 26 Liquid Glass)
+// Amplify Core — Revenue Dashboard (macOS 26 Liquid Glass)
 
 import SwiftUI
 import Charts
@@ -68,7 +68,7 @@ struct RevenueRollUpView: View {
     private var kpiGrid: some View {
         GlassEffectContainer(spacing: 12) {
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4),
+                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5),
                 spacing: 12
             ) {
                 StatBadge(icon: "dollarsign.circle.fill",
@@ -83,6 +83,9 @@ struct RevenueRollUpView: View {
                 StatBadge(icon: "mic.fill",
                           label: "Live Performance",
                           value: formatAmt(vm.totalLiveRevenue), trend: .up, accentColor: Brand.emerald)
+                StatBadge(icon: "sparkles",
+                          label: "AI Forecast (30d)",
+                          value: formatAmt(vm.forecastedRevenue), trend: .neutral, accentColor: .purple)
             }
         }
     }

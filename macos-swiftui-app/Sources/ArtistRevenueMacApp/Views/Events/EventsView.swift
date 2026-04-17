@@ -1,5 +1,5 @@
 // EventsView.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Full Live Events & Venues analytics module.
 // Shows venue revenue bar chart, upcoming events timeline, and sortable data table.

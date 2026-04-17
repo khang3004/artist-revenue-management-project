@@ -1,5 +1,5 @@
 // Artist.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `artists` base table and its `artist_roles` junction table.
 // Maps the ISA parent entity from V1__Core_Entities.sql and V2__ISA_Artists.sql.

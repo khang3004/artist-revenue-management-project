@@ -1,5 +1,5 @@
 // EventRepository.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Data-access layer for events, venues, and performer analytics.
 // Wraps sp_venue_event_analytics (SP7) defined in sp7_venue_event_analytics.sql.

@@ -1,5 +1,5 @@
 // LiquidGlassPolyfill.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // A comprehensive polyfill for the hypothetical/future macOS 26 Tahoe
 // Liquid Glass APIs, gracefully degrading them to standard SwiftUI modifiers

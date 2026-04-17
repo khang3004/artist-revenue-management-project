@@ -1,5 +1,5 @@
 // DatabaseClient.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // PostgresNIO-backed connection pool actor with a readiness gate.
 // All repository objects hold a shared reference and call through it for queries.
@@ -13,7 +13,7 @@ import Logging
 /// and exposes a typed query execution interface for all Repository objects.
 ///
 /// ### Lifecycle
-/// 1. `DatabaseClient.shared.start()` is called from `LabelMasterProApp.init()` via a
+/// 1. `DatabaseClient.shared.start()` is called from `AmplifyCoreApp.init()` via a
 ///    detached Task — this fires as early as possible, before any view appears.
 /// 2. `query()` / `execute()` callers that arrive before the pool is ready **wait**
 ///    via a `CheckedContinuation` queue rather than failing or racing.

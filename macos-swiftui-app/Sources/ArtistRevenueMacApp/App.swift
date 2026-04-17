@@ -1,5 +1,5 @@
 // App.swift
-// LabelMaster Pro — Application Entry Point (macOS 26 Liquid Glass)
+// Amplify Core — Application Entry Point (macOS 26 Liquid Glass)
 //
 // Design guidelines followed:
 //   • NavigationSplitView handles sidebar glass automatically — do NOT add custom backgrounds.
@@ -12,7 +12,7 @@ import SwiftUI
 // MARK: - AppModule
 
 enum AppModule: String, CaseIterable, Identifiable, Hashable {
-    case dashboard, artists, analytics, events, finance
+    case dashboard, artists, albums, tracks, labels, analytics, events, venues, finance, managers
 
     var id: String { rawValue }
 
@@ -20,9 +20,14 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .dashboard: return "Revenue Dashboard"
         case .artists:   return "Artist Directory"
+        case .albums:    return "Albums Catalog"
+        case .tracks:    return "Tracks Registry"
+        case .labels:    return "Record Labels"
         case .analytics: return "Revenue Analytics"
         case .events:    return "Live Events"
+        case .venues:    return "Venues"
         case .finance:   return "Finance & Contracts"
+        case .managers:  return "Managers"
         }
     }
 
@@ -30,17 +35,22 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .dashboard: return "waveform"
         case .artists:   return "music.mic"
+        case .albums:    return "opticaldisc"
+        case .tracks:    return "music.note"
+        case .labels:    return "building.2.fill"
         case .analytics: return "chart.xyaxis.line"
         case .events:    return "ticket.fill"
+        case .venues:    return "map.fill"
         case .finance:   return "banknote.fill"
+        case .managers:  return "person.3.fill"
         }
     }
 
     var section: String {
         switch self {
         case .dashboard, .analytics: return "Analytics"
-        case .artists:               return "Management"
-        case .events, .finance:      return "Operations"
+        case .artists, .albums, .tracks, .labels: return "Management"
+        case .events, .venues, .finance, .managers: return "Operations"
         }
     }
 }
@@ -53,6 +63,8 @@ struct ContentView: View {
     @Environment(ArtistDirectoryViewModel.self) private var artistVM
     @Environment(EventsViewModel.self)          private var eventsVM
     @Environment(FinanceViewModel.self)         private var financeVM
+    
+    let artistRepo: ArtistRepository
 
     @State private var selectedModule: AppModule? = .dashboard
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
@@ -84,6 +96,11 @@ struct ContentView: View {
             case .analytics: RevenueAnalyticsView()
             case .events:    EventsView()
             case .finance:   FinanceView()
+            case .labels:    LabelDirectoryView(repo: artistRepo)
+            case .albums:    UniversalManagementView(title: "Albums Catalog", subtitle: "Full discography management", icon: "opticaldisc", mockPrefix: "Album")
+            case .tracks:    UniversalManagementView(title: "Tracks Registry", subtitle: "Individual track metadata and stems", icon: "music.note", mockPrefix: "Track")
+            case .venues:    UniversalManagementView(title: "Venues", subtitle: "Performance locations and capacity management", icon: "map.fill", mockPrefix: "Venue")
+            case .managers:  UniversalManagementView(title: "Managers", subtitle: "Agent and management contact roster", icon: "person.3.fill", mockPrefix: "Manager")
             case .none:
                 ContentUnavailableView(
                     "Select a Module",
@@ -139,15 +156,16 @@ struct ContentView: View {
     }
 }
 
-// MARK: - LabelMasterProApp
+// MARK: - AmplifyCoreApp
 
 @main
-struct LabelMasterProApp: App {
+struct AmplifyCoreApp: App {
 
     @State private var dashboardVM: DashboardViewModel
     @State private var artistVM:    ArtistDirectoryViewModel
     @State private var eventsVM:    EventsViewModel
     @State private var financeVM:   FinanceViewModel
+    private let artistRepo: ArtistRepository // Keep reference to pass to views if needed
 
     init() {
         let db = DatabaseClient.shared
@@ -158,6 +176,7 @@ struct LabelMasterProApp: App {
         }
 
         let artistRepo   = ArtistRepository(client: db)
+        self.artistRepo  = artistRepo
         let revenueRepo  = RevenueRepository(client: db)
         let contractRepo = ContractRepository(client: db)
         let eventRepo    = EventRepository(client: db)
@@ -172,8 +191,8 @@ struct LabelMasterProApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("LabelMaster Pro") {
-            ContentView()
+        WindowGroup("Amplify Core") {
+            ContentView(artistRepo: artistRepo)
                 .environment(dashboardVM)
                 .environment(artistVM)
                 .environment(eventsVM)
@@ -186,7 +205,7 @@ struct LabelMasterProApp: App {
         .defaultSize(width: 1400, height: 860)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About LabelMaster Pro") { NSApp.orderFrontStandardAboutPanel(nil) }
+                Button("About Amplify Core") { NSApp.orderFrontStandardAboutPanel(nil) }
             }
             CommandGroup(after: .newItem) {
                 Button("Refresh Data") {

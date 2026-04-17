@@ -1,5 +1,5 @@
 // StatBadge.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // KPI metric badge using macOS 26 Liquid Glass design language.
 // Wrap multiple StatBadges in GlassEffectContainer so glass shapes morphs together.

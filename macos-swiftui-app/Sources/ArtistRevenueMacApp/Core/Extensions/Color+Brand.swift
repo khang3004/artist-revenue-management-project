@@ -1,5 +1,5 @@
 // Color+Brand.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Brand colour tokens calibrated for macOS 26 Liquid Glass.
 //

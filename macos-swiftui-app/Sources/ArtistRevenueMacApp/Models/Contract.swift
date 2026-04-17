@@ -1,5 +1,5 @@
 // Contract.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `contracts` ISA hierarchy defined in V3__Contracts_and_Splits.sql.
 // Maps the base `contracts` table; sub-type detail tables are not individually mapped here.

@@ -1,5 +1,5 @@
 // ContractRepository.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Data-access layer for the `contracts` ISA hierarchy defined in V3__Contracts_and_Splits.sql.
 

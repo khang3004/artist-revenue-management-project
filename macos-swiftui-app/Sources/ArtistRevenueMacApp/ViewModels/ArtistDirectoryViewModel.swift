@@ -1,5 +1,5 @@
 // ArtistDirectoryViewModel.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Observable ViewModel driving the ArtistDirectoryView CRUD interface.
 

@@ -1,5 +1,5 @@
 // swift-tools-version: 5.10
-// LabelMaster Pro — macOS Artist Revenue Management Application
+// Amplify Core — macOS Artist Revenue Management Application
 // Toolchain: Xcode 16+ / Swift 5.10+
 // Deployment target: macOS 26.0 (Tahoe) — Required for Liquid Glass APIs:
 //   .glassEffect(_:in:), GlassEffectContainer, .buttonStyle(.glass),
@@ -8,7 +8,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "LabelMasterPro",
+    name: "AmplifyCore",
     defaultLocalization: "en",
     platforms: [
         .macOS("26.0")   // Tahoe: Liquid Glass, glassEffect, GlassEffectContainer
@@ -27,7 +27,7 @@ let package = Package(
             path: "Sources/ArtistRevenueMacApp"
         ),
         .testTarget(
-            name: "LabelMasterProTests",
+            name: "AmplifyCoreTests",
             dependencies: ["ArtistRevenueMacApp"],
             path: "Tests"
         ),

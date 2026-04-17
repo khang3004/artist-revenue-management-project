@@ -1,5 +1,5 @@
 // LoadingOverlay.swift
-// LabelMaster Pro — Liquid Glass loading state (macOS 26)
+// Amplify Core — Liquid Glass loading state (macOS 26)
 
 import SwiftUI
 

@@ -1,5 +1,5 @@
 // ArtistWallet.swift
-// LabelMaster Pro
+// Amplify Core
 //
 // Domain model for the `artist_wallets` weak entity and its `withdrawals` table,
 // defined in V5__Revenue_and_Wallets.sql.
