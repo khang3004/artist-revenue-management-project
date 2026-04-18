@@ -28,12 +28,15 @@ BEGIN
         RAISE EXCEPTION 'Amount must be positive (got %). Use reversal for refunds.', p_amount;
     END IF;
 
-    IF p_revenue_type NOT IN ('streaming', 'sync', 'live') THEN
-        RAISE EXCEPTION 'Invalid revenue_type: "%". Expected: streaming | sync | live', p_revenue_type;
+    -- Normalize to uppercase to match revenue_type_enum
+    p_revenue_type := UPPER(p_revenue_type);
+
+    IF p_revenue_type NOT IN ('STREAMING', 'SYNC', 'LIVE') THEN
+        RAISE EXCEPTION 'Invalid revenue_type: "%". Expected: STREAMING | SYNC | LIVE', p_revenue_type;
     END IF;
 
     -- BR-05: Live revenue must link event
-    IF p_revenue_type = 'live' AND p_event_id IS NULL THEN
+    IF p_revenue_type = 'LIVE' AND p_event_id IS NULL THEN
         RAISE EXCEPTION 'BR-05 violated: Live revenue must have event_id';
     END IF;
 
@@ -45,13 +48,13 @@ BEGIN
 
     -- 2. INSERT ISA child (disjoint, total)
     CASE p_revenue_type
-        WHEN 'streaming' THEN
+        WHEN 'STREAMING' THEN
             INSERT INTO streaming_revenue_details (log_id, stream_count, per_stream_rate, platform)
             VALUES (new_log_id, p_stream_count, p_per_stream_rate, p_platform);
-        WHEN 'sync' THEN
+        WHEN 'SYNC' THEN
             INSERT INTO sync_revenue_details (log_id, licensee_name, usage_type)
             VALUES (new_log_id, p_licensee_name, p_usage_type);
-        WHEN 'live' THEN
+        WHEN 'LIVE' THEN
             INSERT INTO live_revenue_details (log_id, event_id, ticket_sold)
             VALUES (new_log_id, p_event_id, p_ticket_sold);
     END CASE;

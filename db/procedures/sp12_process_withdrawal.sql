@@ -26,28 +26,28 @@ BEGIN
     -- State machine transitions
     CASE p_action
         WHEN 'approve' THEN
-            IF v_status != 'pending' THEN
+            IF v_status != 'PENDING' THEN
                 RAISE EXCEPTION 'Can only approve PENDING withdrawals (current: %)', v_status;
             END IF;
-            UPDATE withdrawals SET status = 'approved', processed_at = NOW()
+            UPDATE withdrawals SET status = 'APPROVED', processed_at = NOW()
             WHERE withdrawal_id = p_withdrawal_id;
 
         WHEN 'reject' THEN
-            IF v_status NOT IN ('pending', 'approved') THEN
+            IF v_status NOT IN ('PENDING', 'APPROVED') THEN
                 RAISE EXCEPTION 'Cannot reject withdrawal in status %', v_status;
             END IF;
-            UPDATE withdrawals SET status = 'rejected', processed_at = NOW()
+            UPDATE withdrawals SET status = 'REJECTED', processed_at = NOW()
             WHERE withdrawal_id = p_withdrawal_id;
 
         WHEN 'complete' THEN
-            IF v_status != 'approved' THEN
+            IF v_status != 'APPROVED' THEN
                 RAISE EXCEPTION 'Must approve before complete (current: %)', v_status;
             END IF;
             -- BR-02: Deduct balance ONLY when completed
             UPDATE artist_wallets SET balance = balance - v_amount
             WHERE artist_id = v_artist;
             -- CHECK (balance >= 0) will throw if insufficient
-            UPDATE withdrawals SET status = 'completed', processed_at = NOW()
+            UPDATE withdrawals SET status = 'COMPLETED', processed_at = NOW()
             WHERE withdrawal_id = p_withdrawal_id;
 
         ELSE

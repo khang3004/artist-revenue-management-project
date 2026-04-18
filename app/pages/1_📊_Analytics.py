@@ -25,17 +25,17 @@ SPs = {
     "SP1: ROLLUP — Doanh thu theo nghệ sĩ & tháng": {
         "function": "sp_revenue_by_artist_rollup",
         "params": {"p_year": "int", "p_currency": "str"},
-        "defaults": {"p_year": 2025, "p_currency": "VND"},
+        "defaults": {"p_year": 2024, "p_currency": 'VND'},
         "technique": "ROLLUP + GROUPING()",
         "requirement": "✅ ROLLUP (đề bài yêu cầu)",
         "description": "Tổng doanh thu theo nghệ sĩ & tháng với sub-total và grand total.",
         "chart_type": "bar",
-        "sql_template": "SELECT * FROM sp_revenue_by_artist_rollup({p_year}, '{p_currency}');",
+        "sql_template": "SELECT * FROM sp_revenue_by_artist_rollup({p_year}, {p_currency});",
     },
     "SP2: PIVOT — Doanh thu theo nguồn": {
         "function": "sp_revenue_pivot_by_source_v2",
         "params": {"p_year": "int"},
-        "defaults": {"p_year": 2025},
+        "defaults": {"p_year": 2024},
         "technique": "PIVOT (FILTER aggregation)",
         "requirement": "✅ PIVOT (đề bài yêu cầu)",
         "description": "Pivot doanh thu theo nguồn: Streaming / Sync / Live cho mỗi nghệ sĩ.",
@@ -45,7 +45,7 @@ SPs = {
     "SP3: Subquery lồng — Top nghệ sĩ": {
         "function": "sp_top_earning_artists",
         "params": {"p_year": "int"},
-        "defaults": {"p_year": 2025},
+        "defaults": {"p_year": 2024},
         "technique": "Nested subquery 2 tầng trong HAVING",
         "requirement": "✅ Truy vấn lồng (đề bài yêu cầu)",
         "description": "Top nghệ sĩ có doanh thu cao nhất bằng nested subquery trong HAVING.",
@@ -65,7 +65,7 @@ SPs = {
     "SP5: Window — Top tracks mỗi nghệ sĩ": {
         "function": "sp_top_tracks_per_artist",
         "params": {"p_top_n": "int", "p_year": "int"},
-        "defaults": {"p_top_n": 3, "p_year": 2025},
+        "defaults": {"p_top_n": 3, "p_year": 2024},
         "technique": "CTE + RANK() Window function",
         "requirement": "Nâng cao",
         "description": "Top N tracks theo doanh thu cho mỗi nghệ sĩ, dùng RANK() window.",
@@ -85,7 +85,7 @@ SPs = {
     "SP7: ROLLUP+Window — Venue analytics": {
         "function": "sp_venue_event_analytics",
         "params": {"p_year": "int"},
-        "defaults": {"p_year": 2025},
+        "defaults": {"p_year": 2024},
         "technique": "CTE + ROLLUP + DENSE_RANK()",
         "requirement": "✅ ROLLUP (đề bài yêu cầu)",
         "description": "Thống kê sự kiện theo venue với ROLLUP và xếp hạng DENSE_RANK().",

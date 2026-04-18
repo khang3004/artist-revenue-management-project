@@ -24,14 +24,15 @@ with tab1:
     st.subheader("SP9 — Đăng ký nghệ sĩ mới")
     st.markdown("""
     **Kỹ thuật:** Multi-table INSERT (atomicity) — 1 transaction tạo:
-    `artists` → ISA subtype → `artist_wallets` → `beneficiaries` + `artist_beneficiaries`
+    `artists` → ISA subtype → `artist_roles` → `artist_wallets` → `beneficiaries` + `artist_beneficiaries`
     """)
 
     with st.expander("📝 SQL Template", expanded=False):
         st.code("""CALL sp_register_artist(
-    p_stage_name, p_full_name, p_label_id,
-    p_metadata::jsonb, p_artist_type,
-    p_vocal_range, p_pen_name, p_member_count, NULL
+    p_stage_name, p_full_name,
+    NULL,  -- OUT new_artist_id
+    p_label_id, p_metadata::jsonb, p_artist_type,
+    p_vocal_range, p_pen_name, p_member_count
 );""", language="sql")
 
     c1, c2 = st.columns(2)
@@ -64,9 +65,10 @@ with tab1:
         members = str(member_count) if artist_type == "band" else "NULL"
 
         sql = f"""CALL sp_register_artist(
-    '{stage_name}', '{full_name}', {label_id},
-    '{{"genre": "{genre}"}}'::jsonb, '{artist_type}',
-    {vocal}, {pen}, {members}, NULL
+    '{stage_name}', '{full_name}',
+    NULL,
+    {label_id}, '{{"genre": "{genre}"}}'::jsonb, '{artist_type}',
+    {vocal}, {pen}, {members}
 );"""
         with st.expander("SQL thực thi", expanded=True):
             st.code(sql, language="sql")
@@ -79,9 +81,10 @@ with tab1:
         else:
             new_id = result[0] if result else "?"
             st.success(f"✅ Thành công! Artist ID = {new_id}")
+            isa_table = {"solo": "solo_artists", "band": "bands", "composer": "composers"}[artist_type]
             st.markdown(f"""
-            → Đã tạo: `artists` + `{artist_type + ('_artists' if artist_type == 'solo' else 's' if artist_type == 'band' else 's')}` + `artist_wallets` + `beneficiaries`
-            → **4 bảng INSERT trong 1 transaction**
+            → Đã tạo: `artists` + `{isa_table}` + `artist_roles` + `artist_wallets` + `beneficiaries`
+            → **5 bảng INSERT trong 1 transaction**
             """)
             st.caption(f"⏱️ {ms}ms")
 
@@ -91,7 +94,14 @@ with tab2:
     st.markdown("**Kỹ thuật:** ISA discriminator insert (revenue_logs → streaming/sync/live)")
 
     with st.expander("📝 SQL Template", expanded=False):
-        st.code("CALL sp_record_revenue(track_id, amount, currency, type, ...);", language="sql")
+        st.code("""CALL sp_record_revenue(
+    p_track_id, p_amount, p_revenue_type,
+    NULL,  -- OUT new_log_id
+    p_currency, p_raw_data,
+    p_stream_count, p_per_stream_rate, p_platform,
+    p_licensee_name, p_usage_type,
+    p_event_id, p_ticket_sold
+);""", language="sql")
 
     c1, c2 = st.columns(2)
     with c1:
@@ -130,7 +140,7 @@ with tab2:
         with sc1:
             licensee = st.text_input("Licensee", value="VTV", key="rev_licensee")
         with sc2:
-            usage = st.selectbox("Usage type", ["TV", "film", "advertising", "game"], key="rev_usage")
+            usage = st.selectbox("Usage type", ["Phim ảnh", "Quảng cáo", "Game", "Khác"], key="rev_usage")
     elif rev_type == "live":
         events_df, _, _ = run_query("SELECT event_id, event_name FROM events ORDER BY event_date DESC LIMIT 20")
         event_options = {}
@@ -145,23 +155,27 @@ with tab2:
             ticket_sold = st.number_input("Số vé bán", value=3000, key="rev_tickets")
 
     if st.button("🎵 Ghi nhận", type="primary", key="btn_revenue"):
+        # SP10 accepts lowercase and UPPER()s internally
         if rev_type == "streaming":
             sql = f"""CALL sp_record_revenue(
-    {track_id}, {amount}, '{rev_type}', NULL,
+    {track_id}, {amount}, '{rev_type}',
+    NULL,
     '{currency}', '{{}}'::jsonb,
     {stream_count}, {per_stream}, '{platform}',
     NULL, NULL, NULL, NULL
 );"""
         elif rev_type == "sync":
             sql = f"""CALL sp_record_revenue(
-    {track_id}, {amount}, '{rev_type}', NULL,
+    {track_id}, {amount}, '{rev_type}',
+    NULL,
     '{currency}', '{{}}'::jsonb,
     NULL, NULL, NULL,
     '{licensee}', '{usage}', NULL, NULL
 );"""
         else:
             sql = f"""CALL sp_record_revenue(
-    NULL, {amount}, '{rev_type}', NULL,
+    NULL, {amount}, '{rev_type}',
+    NULL,
     '{currency}', '{{}}'::jsonb,
     NULL, NULL, NULL,
     NULL, NULL, {event_id}, {ticket_sold}
@@ -188,15 +202,15 @@ with tab3:
     st.markdown("""
     **Kỹ thuật:**
     - `SELECT ... FOR UPDATE` (row-level locking)
-    - State machine: `pending → approved → completed` (hoặc `rejected`)
-    - Balance chỉ giảm khi `completed` (BR-02)
+    - State machine: `PENDING → APPROVED → COMPLETED` (hoặc `REJECTED`)
+    - Balance chỉ giảm khi `COMPLETED` (BR-02)
     """)
 
     # Get artists with wallets
     wallet_df, _, _ = run_query("""
         SELECT a.artist_id, a.stage_name, w.balance,
                COALESCE((SELECT SUM(amount) FROM withdrawals
-                         WHERE artist_id = a.artist_id AND status IN ('pending','approved')), 0) AS pending
+                         WHERE artist_id = a.artist_id AND status IN ('PENDING','APPROVED')), 0) AS pending
         FROM artists a
         JOIN artist_wallets w ON a.artist_id = w.artist_id
         ORDER BY a.stage_name
@@ -222,13 +236,13 @@ with tab3:
         wc1, wc2 = st.columns(2)
         with wc1:
             wd_amount = st.number_input(
-                "Số tiền rút (VND)", min_value=0, value=100000000, step=10000000, key="wd_amount"
+                "Số tiền rút (VND)", min_value=0, value=1000, step=1000, key="wd_amount"
             )
         with wc2:
-            wd_method = st.selectbox("Phương thức", ["bank_transfer", "momo", "cash"], key="wd_method")
+            wd_method = st.selectbox("Phương thức", ["bank_transfer", "momo", "zalopay"], key="wd_method")
 
         if st.button("💸 Yêu cầu rút", type="primary", key="btn_withdraw"):
-            sql = f"CALL sp_request_withdrawal({int(info['artist_id'])}, {wd_amount}, '{wd_method}', 'Demo MDL018', NULL);"
+            sql = f"CALL sp_request_withdrawal({int(info['artist_id'])}, {wd_amount}, NULL, '{wd_method}', NULL);"
             with st.expander("SQL thực thi", expanded=True):
                 st.code(sql, language="sql")
             with st.spinner("Đang xử lý..."):
@@ -237,14 +251,14 @@ with tab3:
                 st.error(f"Lỗi: {err}")
             else:
                 new_id = result[0] if result else "?"
-                st.success(f"✅ Withdrawal #{new_id} created (status: pending)")
+                st.success(f"✅ Withdrawal #{new_id} created (status: PENDING)")
                 st.caption(f"⏱️ {ms}ms")
 
         st.divider()
 
         # --- Process withdrawal (SP12) ---
         st.markdown("#### Xử lý withdrawal (SP12) — State Machine")
-        st.markdown("`pending` → `approved` → `completed` | `rejected`")
+        st.markdown("`PENDING` → `APPROVED` → `COMPLETED` | `REJECTED`")
 
         pending_df, _, _ = run_query(f"""
             SELECT withdrawal_id, amount, status, method,

@@ -55,7 +55,7 @@ for col, (label, q) in zip(cols, kpi_queries.items()):
 st.divider()
 
 # --- Year selector ---
-year = st.selectbox("Nam", [2024, 2025, 2026], index=1, key="dash_year")
+year = st.selectbox("Nam", [2024, 2025, 2026], index=0, key="dash_year")
 
 # --- Charts row ---
 c1, c2 = st.columns(2)

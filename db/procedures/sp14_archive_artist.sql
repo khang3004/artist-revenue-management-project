@@ -22,7 +22,7 @@ BEGIN
     -- Pre-condition 1: No pending/approved withdrawals
     SELECT COUNT(*) INTO v_pending
     FROM withdrawals
-    WHERE artist_id = p_artist_id AND status IN ('pending', 'approved');
+    WHERE artist_id = p_artist_id AND status IN ('PENDING', 'APPROVED');
 
     IF v_pending > 0 THEN
         RAISE EXCEPTION 'Cannot archive "%": % pending/approved withdrawal(s). Process them first.',
