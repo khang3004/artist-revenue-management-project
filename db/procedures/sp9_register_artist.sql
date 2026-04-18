@@ -7,13 +7,13 @@
 CREATE OR REPLACE PROCEDURE sp_register_artist(
     p_stage_name      VARCHAR,
     p_full_name       VARCHAR,
+    OUT new_artist_id INT,
     p_label_id        INT DEFAULT NULL,
     p_metadata        JSONB DEFAULT '{}',
     p_artist_type     VARCHAR DEFAULT 'solo',  -- 'solo' | 'band' | 'composer'
     p_vocal_range     VARCHAR DEFAULT NULL,
     p_pen_name        VARCHAR DEFAULT NULL,
-    p_member_count    INT DEFAULT NULL,
-    OUT new_artist_id INT
+    p_member_count    INT DEFAULT NULL
 ) LANGUAGE plpgsql AS $$
 BEGIN
     -- 1. INSERT artist (parent)

@@ -59,7 +59,7 @@ ALTER TABLE distribution_contracts
 
 ALTER TABLE distribution_contracts
     ALTER COLUMN distribution_fee_pct TYPE NUMERIC(5, 2)
-    USING (distribution_fee_pct * 100);
+    USING (CASE WHEN distribution_fee_pct <= 1 THEN distribution_fee_pct * 100 ELSE distribution_fee_pct END);
 
 ALTER TABLE distribution_contracts
     ADD CONSTRAINT distribution_contracts_distribution_fee_pct_check

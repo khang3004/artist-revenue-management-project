@@ -1,81 +1,101 @@
 % ============================================================
-% Section 6: Conclusion
+% Section 6: Kết luận (Slides 12–13)
 % ============================================================
-\section{Conclusion}
+\section{Kết luận}
 
-\begin{frame}{\secname}
-    \sectionCard{Conclusion}{Summary \textbf{·} Technical Highlights \textbf{·} Team Contributions}
-\end{frame}
-
-% ----- Frame: Summary -----
-\begin{frame}{Summary}
+% ----- Slide 12: Vấn đề & Bài học -----
+\begin{frame}{Vấn đề \& Bài học}
     \begin{columns}[T]
-        \begin{column}{0.50\textwidth}
-            \begin{exampleblock}{Completed}
-                \begin{itemize}\scriptsize
-                    \item \textbf{19 tables} with 3 full ISA hierarchies \\
-                          (overlapping/partial + 2$\times$ disjoint/total)
-                    \item \textbf{8 Stored Procedures} --- ROLLUP, PIVOT (FILTER),
-                          Nested subquery in HAVING, LATERAL JOIN,
-                          Window (RANK), Correlated subqueries,
-                          CTE + ROLLUP, GIN + JSONB
-                    \item \textbf{Automated ETL pipeline}: MusicBrainz + Ticketbox
-                          $\to$ Transform $\to$ Neon (3,180 revenue logs)
-                    \item \textbf{5-page Streamlit dashboard} backed by all 8 SPs
-                    \item Materialized Views + GIN / B-Tree / Partial / Expression indexes
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{Vấn đề gặp phải}
+                \begin{itemize}\small
+                    \item Streamlit connection \coral{không ổn định}
+                          với Neon (cold start 3--5s)
+                    \item ERD redesign \textbf{nhiều lần}
+                          {\scriptsize (19 $\to$ 28 $\to$ 25 bảng)}
+                    \item Polymorphic FK gây rắc rối
+                          {\scriptsize $\to$ refactor sang Beneficiaries ISA}
+                    \item Partition table không thể thêm FK trực tiếp
+                \end{itemize}
+            \end{alertblock}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{exampleblock}{Bài học rút ra}
+                \begin{itemize}\small
+                    \item \highlight{Schema design trước, code sau}
+                          {\scriptsize --- đặc tả $\to$ ERD $\to$ DDL $\to$ SP}
+                    \item ISA pattern \textbf{tốt hơn} polymorphic FK
+                          {\scriptsize --- FK sạch, chuẩn hoá, dễ JOIN}
+                    \item Append-only + reversal entry
+                          {\scriptsize --- audit trail cho tài chính}
+                    \item ETL pipeline cần \textbf{idempotent}
+                          {\scriptsize --- UPSERT thay INSERT}
                 \end{itemize}
             \end{exampleblock}
         \end{column}
-        \begin{column}{0.46\textwidth}
-            \begin{block}{Technical Highlights}
-                \begin{itemize}\scriptsize
-                    \item \textbf{Polymorphic FK} --- \tbl{contract\_splits} $\to$
-                          Artist XOR Label (ISA beneficiaries table)
-                    \item \textbf{UUID PK} for contracts --- prevents ID enumeration
-                    \item \textbf{Append-only} \tbl{revenue\_logs} partitioned
-                          by quarter --- immutable financial audit trail
-                    \item \textbf{JSONB metadata} + GIN index --- flexible
-                          genre \& social-link search
-                    \item \textbf{Wallet reconciliation} --- difference $\approx$ 0
-                          for all 22 artists (audit\_status = OK)
-                    \item \textbf{Neon Serverless} --- SSL enforced,
-                          SCRAM-SHA-256, connection pooling
+    \end{columns}
+
+    \note{
+        Thành thật về challenges --- GV đánh giá cao sự minh bạch.
+        ``ERD redesign 3 lần vì ban đầu thiếu ISA, sau đó thêm quá nhiều,
+        cuối cùng cân bằng lại 25 bảng.''
+        ``Polymorphic FK: ban đầu contract\_splits dùng CHECK XOR
+        (artist\_id, label\_id) --- hoạt động nhưng không chuẩn hoá.
+        Refactor sang Beneficiaries ISA sạch hơn nhiều.''
+    }
+\end{frame}
+
+% ----- Slide 13: Deliverables -----
+\begin{frame}{Deliverables}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            \begin{block}{Sản phẩm bàn giao}
+                \begin{itemize}\small
+                    \item \textbf{Báo cáo Word} {\scriptsize (Thanh Nguyen)} \\
+                          {\scriptsize Đặc tả, ERD, thiết kế vật lý, kết quả SP}
+                    \item \textbf{SQL Scripts} \\
+                          {\scriptsize 9 migrations, 5 seeds, 14 stored procedures}
+                    \item \textbf{Slide trình bày} \\
+                          {\scriptsize LaTeX Beamer, 14 slides + speaker notes}
+                    \item \textbf{ETL Pipeline} \\
+                          {\scriptsize Python + SQLAlchemy, 3 sources}
+                    \item \textbf{Dashboard} \\
+                          {\scriptsize Streamlit 5 pages + Plotly charts}
                 \end{itemize}
             \end{block}
         \end{column}
-    \end{columns}
-\end{frame}
+        \begin{column}{0.46\textwidth}
+            \begin{exampleblock}{Phân công}
+                \begin{tabular}{@{}ll@{}}
+                    \toprule
+                    \textbf{Thành viên} & \textbf{Công việc} \\
+                    \midrule
+                    KhangDSnAI    & Intro, Outro        \\
+                    Khanh Vu      & Demo, Data story    \\
+                    Hung Mai      & ERD, 14 SPs         \\
+                    Thanh Nguyen  & Docs, Weak entities \\
+                    \bottomrule
+                \end{tabular}
+            \end{exampleblock}
 
-% ----- Frame: Team -----
-\begin{frame}{Team Contributions}
-    \centering
-    \begin{tabular}{@{}clll@{}}
-        \toprule
-        & \textbf{Member} & \textbf{Responsibilities} & \textbf{Share} \\
-        \midrule
-        A & Member A & Requirements spec, ERD, logical design, report & 25\% \\
-        B & Member B & DDL scripts, seed data, views, indexes          & 25\% \\
-        C & Member C & Stored Procedures (8 SPs), ETL pipeline         & 25\% \\
-        D & Member D & Streamlit dashboard (5 pages), slides           & 25\% \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{0.8em}
-    \begin{columns}[T]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Git Workflow}
+            \vspace{0.4em}
+            \begin{block}{\small Source Code}
+                \centering
                 \scriptsize
-                \texttt{feat/fix/docs} branches \\
-                $\to$ \texttt{develop} $\to$ \texttt{main}
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{Commit Convention}
-                \scriptsize
-                \texttt{feat(db): add ISA tables} \\
-                \texttt{fix(sp): cast play\_count to BIGINT} \\
-                \texttt{docs(erd): update 19-table diagram}
+                GitHub repo (develop branch) \\
+                \tbl{db/migrations/} $\bullet$ \tbl{db/procedures/} \\
+                \tbl{db/seeds/} $\bullet$ \tbl{etl/} $\bullet$ \tbl{app/}
             \end{block}
         \end{column}
     \end{columns}
+
+    \note{
+        Liệt kê cấu trúc thư mục:
+        db/migrations/ --- 9 file V1--V9, chạy theo thứ tự.
+        db/procedures/ --- 14 SP + sp\_refresh\_all\_mv.
+        db/seeds/ --- 5 file seed data V-Pop.
+        etl/ --- extractors, transformers, loaders.
+        app/ --- Streamlit dashboard 5 pages.
+        slides/ --- LaTeX source (file này).
+    }
 \end{frame}

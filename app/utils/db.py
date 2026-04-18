@@ -1,125 +1,115 @@
 """
-Database connection utilities for Neon PostgreSQL (Cloud only)
+Database utilities for Neon PostgreSQL
+- Cached connection with warm-up
+- run_sp() with timing + error handling
 """
 
 import psycopg2
+import psycopg2.extras
+import pandas as pd
 import os
+import time
 import streamlit as st
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 
 @st.cache_resource
 def get_db_connection():
-    """
-    Create and cache Neon PostgreSQL connection
-    """
+    """Cached Neon PostgreSQL connection."""
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        st.error("DATABASE_URL not set. Add it to .env")
+        return None
     try:
-        database_url = os.getenv("DATABASE_URL")
-
-        if not database_url:
-            raise Exception("DATABASE_URL environment variable not set")
-
-        # Determine SSL mode: 
-        # 1. Use DB_SSL_MODE if defined
-        # 2. Use "require" if it's a Neon URL
-        # 3. Default to "disable" for local Docker
-        ssl_mode = os.getenv("DB_SSL_MODE")
-        if not ssl_mode:
-            if "neon.tech" in database_url:
-                ssl_mode = "require"
-            else:
-                ssl_mode = "disable"
-
-        conn = psycopg2.connect(
-            database_url,
-            sslmode=ssl_mode
-        )
+        conn = psycopg2.connect(database_url, sslmode="require")
         conn.autocommit = True
-
         return conn
-
     except Exception as e:
-        st.error(f"Database connection error: {e}")
+        st.error(f"Connection error: {e}")
         return None
 
 
-def test_connection():
-    """
-    Test database connection
-    """
+def _get_conn():
+    """Get connection, reset if stale."""
+    conn = get_db_connection()
+    if conn is None:
+        return None
     try:
-        conn = get_db_connection()
-
-        if conn is None:
-            return False
-
         conn.rollback()
-
         cur = conn.cursor()
         cur.execute("SELECT 1")
         cur.fetchone()
         cur.close()
+        return conn
+    except Exception:
+        # Connection died (Neon suspend) — clear cache & reconnect
+        get_db_connection.clear()
+        return get_db_connection()
 
-        return True
 
-    except Exception as e:
-        print("Connection test failed:", e)
+def test_connection():
+    """Test database connectivity."""
+    try:
+        return _get_conn() is not None
+    except Exception:
         return False
 
 
-@st.cache_data(ttl=60)
-def execute_query(query, params=None):
+def run_query(query, params=None):
     """
-    Execute SELECT query and return results
+    Execute SELECT query. Returns (df, elapsed_ms, error).
     """
+    conn = _get_conn()
+    if conn is None:
+        return None, 0, "No database connection"
+    start = time.time()
     try:
-        conn = get_db_connection()
-
-        if conn is None:
-            st.error("Database connection not available")
-            return [], []
-
         conn.rollback()
-
-        cur = conn.cursor()
-
-        cur.execute(query, params)
-
-        columns = [desc[0] for desc in cur.description]
-        rows = cur.fetchall()
-
-        cur.close()
-
-        return columns, rows
-
+        df = pd.read_sql(query, conn, params=params)
+        elapsed = round((time.time() - start) * 1000)
+        return df, elapsed, None
     except Exception as e:
-        st.error(f"Query failed: {e}")
-        return [], []
+        elapsed = round((time.time() - start) * 1000)
+        return None, elapsed, str(e).split("\n")[0]
 
 
-def execute_non_query(query, params=None):
+def run_procedure(query, params=None):
     """
-    Execute INSERT / UPDATE / DELETE queries
+    Execute CALL procedure. Returns (message, elapsed_ms, error).
     """
+    conn = _get_conn()
+    if conn is None:
+        return None, 0, "No database connection"
+    start = time.time()
     try:
-        conn = get_db_connection()
-
-        if conn is None:
-            st.error("Database connection not available")
-            return False
-
+        conn.rollback()
         cur = conn.cursor()
-
         cur.execute(query, params)
-        conn.commit()
-
-        cur.close()
-
-        return True
-
+        # Try to fetch OUT params
+        try:
+            result = cur.fetchone()
+            cur.close()
+            elapsed = round((time.time() - start) * 1000)
+            return result, elapsed, None
+        except psycopg2.ProgrammingError:
+            cur.close()
+            elapsed = round((time.time() - start) * 1000)
+            return None, elapsed, None
     except Exception as e:
-        st.error(f"Database operation failed: {e}")
-        return False
+        elapsed = round((time.time() - start) * 1000)
+        return None, elapsed, str(e).split("\n")[0]
+
+
+def show_result(df, elapsed_ms, error):
+    """Display query result with timing."""
+    if error:
+        st.error(f"Loi: {error}")
+        st.info("Tip: Neon compute dang warm up. Thu lai sau 3 giay.")
+    elif df is not None and not df.empty:
+        st.dataframe(df, use_container_width=True)
+        st.caption(f"⏱️ {elapsed_ms}ms | {len(df)} rows")
+    elif df is not None:
+        st.info("Khong co du lieu.")
+        st.caption(f"⏱️ {elapsed_ms}ms | 0 rows")

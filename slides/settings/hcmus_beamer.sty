@@ -1,56 +1,81 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{khang_beamer}[2026/01/23 Custom Beamer Style for Group 3]
+\ProvidesPackage{hcmus_beamer}[2026/04/18 HCMUS Beamer Style - V-Pop Revenue]
 \RequirePackage{tikz}
-% --- 1. LANGUAGE & ENCODING ---
-\RequirePackage[utf8]{inputenc}
-% We keep vntex just in case you need to type Vietnamese names (e.g., Nguyen)
-% but the main content will be English.
-%\RequirePackage{vntex}
 
-% --- 2. THEME SELECTION ---
-% 'Madrid' is clean, organized, and has a footer for progress tracking.
-\usetheme{Warsaw}
-% 'Beaver' uses Red/Gray tones (Professional & Warning-friendly).
+% --- 1. FONT CONFIGURATION (XeLaTeX) ---
+\RequirePackage{fontspec}
+\IfFontExistsTF{Fira Sans}{%
+    \setsansfont{Fira Sans}[
+        BoldFont       = {Fira Sans Bold},
+        ItalicFont     = {Fira Sans Italic},
+        BoldItalicFont = {Fira Sans Bold Italic}
+    ]%
+}{}
+\IfFontExistsTF{Fira Mono}{%
+    \setmonofont{Fira Mono}[Scale=0.85]%
+}{}
+
+% --- 2. THEME ---
+\usetheme{Madrid}
 \usecolortheme{beaver}
 
-% --- 3. FONT CONFIGURATION (CRITICAL) ---
-\RequirePackage{lmodern}         % 1. Use Latin Modern (High quality fonts)
-\usefonttheme{professionalfonts} % 2. Prevent Beamer from overwriting math fonts
-\usefonttheme[onlymath]{serif}   % 3. CRITICAL: Force Math to use Serif, Text remains Sans-serif
+% --- 3. CUSTOM COLORS (navy / coral / ice blue) ---
+\definecolor{navyPrimary}{HTML}{1E2761}
+\definecolor{coralAccent}{HTML}{F96167}
+\definecolor{iceBlue}{HTML}{CADCFC}
+\definecolor{darkred}{HTML}{8B0000}
 
-% --- 4. UTILITIES PACKAGES ---
-\RequirePackage{graphicx}        % For images
-\RequirePackage{booktabs}        % For professional tables
-\RequirePackage{amsmath, amssymb, mathtools} % For advanced math
+\setbeamercolor{structure}{fg=navyPrimary}
+\setbeamercolor{palette primary}{bg=navyPrimary, fg=white}
+\setbeamercolor{palette secondary}{bg=iceBlue, fg=navyPrimary}
+\setbeamercolor{palette tertiary}{bg=navyPrimary!80, fg=white}
+\setbeamercolor{palette quaternary}{bg=navyPrimary, fg=white}
+\setbeamercolor{frametitle}{bg=navyPrimary!10, fg=navyPrimary}
+\setbeamercolor{title}{fg=navyPrimary}
+\setbeamercolor{block title}{bg=navyPrimary, fg=white}
+\setbeamercolor{block body}{bg=iceBlue!20}
+\setbeamercolor{block title alerted}{bg=coralAccent, fg=white}
+\setbeamercolor{block body alerted}{bg=coralAccent!10}
+\setbeamercolor{block title example}{bg=navyPrimary!60, fg=white}
+\setbeamercolor{block body example}{bg=iceBlue!15}
+\setbeamercolor{item}{fg=navyPrimary}
+\setbeamercolor{subitem}{fg=coralAccent}
+
+% --- 4. FONT THEME ---
+\usefonttheme{professionalfonts}
+\usefonttheme[onlymath]{serif}
+
+% --- 5. UTILITIES ---
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{amsmath, amssymb}
 \RequirePackage{caption}
-% Make captions smaller and bold the label (e.g., "Figure 1")
 \captionsetup{font=scriptsize, labelfont={bf}}
 
-% --- 5. UI TWEAKS ---
-% Remove the navigation symbols at the bottom right (useless and ugly)
+% --- 6. NAVIGATION ---
 \setbeamertemplate{navigation symbols}{}
 
-% --- 6. MACROS DEFINITIONS (DRY Principle) ---
-\DeclareMathOperator{\E}{\mathbb{E}}        % Expectation
-\DeclareMathOperator{\Var}{Var}             % Variance
-\DeclareMathOperator{\Bias}{Bias}           % Bias
-\newcommand{\vect}[1]{\mathbf{#1}}          % Bold vectors
-% @brief: Symbol for Real number space (R)
-\newcommand{\R}{\mathbb{R}}
+% --- 7. SECTION DIVIDER PAGES (auto) ---
+\AtBeginSection[]{%
+    \begin{frame}[plain, noframenumbering]
+        \centering
+        \vfill
+        {\Large \textcolor{navyPrimary}{\secname}}
+        \vspace{0.3em}
 
-% @brief: Absolute value with auto-sizing delimiters.
-% @usage: \abs{x} or \abs*{x} for dynamic sizing.
-\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
-%\logo{
-%    \includegraphics[height=0.8cm]{hcmus_logo}
-%%    \vspace{220pt}
-%}
+        \textcolor{coralAccent}{\rule{4cm}{1.5pt}}
+        \vfill
+    \end{frame}
+}
 
+% --- 8. HCMUS LOGO IN HEADER ---
 \addtobeamertemplate{headline}{}{%
     \begin{tikzpicture}[remember picture,overlay]
-        \node[anchor=north west, inner sep=0pt] at (current page.north west) [xshift=0.2cm, yshift=-0.1cm] {
+        \node[anchor=north west, inner sep=0pt]
+            at (current page.north west) [xshift=0.2cm, yshift=-0.1cm] {
             \includegraphics[height=0.7cm]{hcmus_logo}
         };
     \end{tikzpicture}
 }
+
 \endinput

@@ -1,141 +1,154 @@
 % ============================================================
-% Section 2: Conceptual Design (ERD)
+% Section 2: Thiết kế (Slides 4–6)
 % ============================================================
-\section{Conceptual Design (ERD)}
+\section{Thiết kế}
 
-\begin{frame}{\secname}
-    \sectionCard{Database Design}{19 Tables \textbf{·} 3 ISA Relationships \textbf{·} Polymorphic FK}
-\end{frame}
+% ----- Slide 4: Tổng quan Schema -----
+\begin{frame}{Tổng quan Schema}
+    % --- Stat boxes ---
+    \begin{columns}[c]
+        \begin{column}{0.22\textwidth}
+            \statBox{25}{Bảng}
+        \end{column}
+        \begin{column}{0.22\textwidth}
+            \statBox{4}{ISA}
+        \end{column}
+        \begin{column}{0.22\textwidth}
+            \statBox{12}{Weak Entities}
+        \end{column}
+        \begin{column}{0.22\textwidth}
+            \statBox{14}{Stored Procs}
+        \end{column}
+    \end{columns}
 
-% ----- Frame: 19 tables overview -----
-\begin{frame}{Schema Overview --- 19 Tables, 4 Groups}
+    \vspace{0.6em}
+
+    % --- 4 groups ---
     \begin{columns}[T]
-        \begin{column}{0.48\textwidth}
-            \begin{alertblock}{\small Group 1 --- Core Entities (7 tables)}
+        \begin{column}{0.24\textwidth}
+            \begin{alertblock}{\centering\small Core (8)}
                 \scriptsize
-                \tbl{labels}, \tbl{artists} \textit{(parent)} \\
-                \tbl{solo\_artists}, \tbl{bands}, \tbl{composers} \textit{(ISA children)} \\
-                \tbl{albums}, \tbl{tracks}
+                \tbl{labels} \\
+                \tbl{artists} \\
+                \tbl{solo\_artists} \\
+                \tbl{bands} \\
+                \tbl{composers} \\
+                \tbl{albums} \\
+                \tbl{tracks} \\
+                \tbl{artist\_roles}
             \end{alertblock}
-            \vspace{0.3em}
-            \begin{block}{\small Group 2 --- Contracts \& Splits (5 tables)}
+        \end{column}
+        \begin{column}{0.24\textwidth}
+            \begin{block}{\centering\small Contracts (8)}
                 \scriptsize
-                \tbl{contracts} \textit{(parent)} \\
-                \tbl{recording\_contracts}, \tbl{distribution\_contracts}, \\
-                \tbl{publishing\_contracts} \textit{(ISA children)} \\
-                \tbl{contract\_splits} \textit{(polymorphic FK)}
+                \tbl{contracts} \\
+                \tbl{recording\_c.} \\
+                \tbl{distribution\_c.} \\
+                \tbl{publishing\_c.} \\
+                \tbl{contract\_splits} \\
+                \tbl{beneficiaries} \\
+                \tbl{artist\_ben.} \\
+                \tbl{label\_ben.}
             \end{block}
         \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{\small Group 3 --- Revenue (6 tables)}
+        \begin{column}{0.24\textwidth}
+            \begin{block}{\centering\small Revenue (6)}
                 \scriptsize
-                \tbl{revenue\_logs} \textit{(parent, append-only, partitioned)} \\
-                \tbl{streaming\_revenue\_details} \\
-                \tbl{sync\_revenue\_details} \\
-                \tbl{live\_revenue\_details} \textit{(ISA children)} \\
-                \tbl{artist\_wallets}, \tbl{withdrawals}
+                \tbl{revenue\_logs} \\
+                \tbl{streaming\_rev.} \\
+                \tbl{sync\_rev.} \\
+                \tbl{live\_rev.} \\
+                \tbl{artist\_wallets} \\
+                \tbl{withdrawals}
             \end{block}
-            \vspace{0.3em}
-            \begin{exampleblock}{\small Group 4 --- Events \& Venues (3 tables)}
+        \end{column}
+        \begin{column}{0.24\textwidth}
+            \begin{exampleblock}{\centering\small Events (4)}
                 \scriptsize
-                \tbl{events}, \tbl{venues}, \tbl{managers}
+                \tbl{events} \\
+                \tbl{venues} \\
+                \tbl{managers} \\
+                \tbl{band\_members}
             \end{exampleblock}
         \end{column}
     \end{columns}
-    \vspace{0.4em}
-    \centering
-    \small \textbf{Total: 19 tables} (13 core tables + 6 ISA child tables)
+
+    \note{
+        ``Schema đủ phức tạp để cover hết các kỹ thuật đề bài yêu cầu:
+        ISA, weak entity, partitioning, JSONB, GIN index, window functions...''
+        Giải thích nhanh 4 nhóm --- Core là trung tâm, Revenue là phức tạp nhất.
+    }
 \end{frame}
 
-% ----- Frame: ERD Diagram -----
-\begin{frame}{ERD Diagram}
+% ----- Slide 5: ERD -----
+\begin{frame}[plain]{ERD --- Entity-Relationship Diagram}
     \centering
-    % Export docs/erd/music_royalty_ledger_ERD-Plain_ERD.drawio.svg
-    % to figures/erd.png (draw.io: File > Export As > PNG, scale 200%)
-    \includegraphics[width=0.93\textwidth, height=0.76\textheight, keepaspectratio]{erd}
-    \captionof{figure}{Entity-Relationship Diagram --- Artist Revenue Management System}
+    % Export ERD from docs/erd/ to figures/erd.png
+    % (draw.io: File > Export As > PNG, scale 200%)
+    \includegraphics[width=0.93\textwidth, height=0.80\textheight, keepaspectratio]{erd}
+
+    \vspace{0.2em}
+    {\scriptsize 4 ISA hierarchies $\bullet$ Chen's notation $\bullet$ Weak entities gạch đôi}
+
+    \note{
+        Giải thích từng ISA:
+        (1) Artists: overlapping vì Sơn Tùng vừa ca sĩ vừa nhạc sĩ.
+        (2) Contracts: disjoint vì 1 hợp đồng chỉ thuộc 1 loại.
+        (3) Revenue: disjoint vì 1 dòng doanh thu chỉ từ 1 nguồn.
+        (4) Beneficiaries: disjoint --- thay polymorphic FK bằng ISA sạch hơn.
+        Nếu ERD quá nhỏ trên màn chiếu, zoom vào từng nhóm khi Q\&A.
+    }
 \end{frame}
 
-% ----- Frame: ISA Relationships -----
-\begin{frame}{ISA Relationships --- 3 Inheritance Hierarchies}
+% ----- Slide 6: ISA & Weak Entities -----
+\begin{frame}{ISA \& Weak Entities}
     \begin{columns}[T]
-        \begin{column}{0.32\textwidth}
-            \begin{alertblock}{\small Artists ISA}
-                \centering \textbf{Overlapping, Partial}
-                \vspace{0.3em}
+        \begin{column}{0.55\textwidth}
+            \textbf{4 quan hệ ISA:}
+            \vspace{0.3em}
 
-                \scriptsize
-                An artist may hold \textbf{multiple roles simultaneously}
-                or belong to \textbf{none} (e.g.\ unclassified DJ)
-                \vspace{0.3em}
+            \begin{adjustbox}{max width=\textwidth}
+            \begin{tabular}{@{}llll@{}}
+                \toprule
+                \textbf{Parent}       & \textbf{Children}            & \textbf{Overlap} & \textbf{Total} \\
+                \midrule
+                \tbl{artists}         & solo, bands, composers       & Overlapping      & Partial  \\
+                \tbl{contracts}       & recording, distrib., publish.& Disjoint         & Total    \\
+                \tbl{revenue\_logs}   & streaming, sync, live        & Disjoint         & Total    \\
+                \tbl{beneficiaries}   & artist\_ben., label\_ben.    & Disjoint         & Total    \\
+                \bottomrule
+            \end{tabular}
+            \end{adjustbox}
 
-                $\downarrow$ \tbl{solo\_artists} \\
-                $\downarrow$ \tbl{bands} \\
-                $\downarrow$ \tbl{composers}
-            \end{alertblock}
+            \vspace{0.6em}
+            \coral{Beneficiaries ISA} thay thế polymorphic FK \\
+            {\scriptsize \tbl{contract\_splits} $\to$ \tbl{beneficiaries} (FK sạch, chuẩn 3NF)}
         \end{column}
-        \begin{column}{0.32\textwidth}
-            \begin{block}{\small Contracts ISA}
-                \centering \textbf{Disjoint, Total}
-                \vspace{0.3em}
-
-                \scriptsize
-                Every contract \textbf{must} belong to exactly one type --- no overlap, no exceptions
-                \vspace{0.3em}
-
-                $\downarrow$ \tbl{recording\_contracts} \\
-                $\downarrow$ \tbl{distribution\_contracts} \\
-                $\downarrow$ \tbl{publishing\_contracts}
+        \begin{column}{0.42\textwidth}
+            \begin{block}{12 Weak Entities}
+                \begin{itemize}\scriptsize
+                    \item 9 ISA subtypes \\
+                          {\tiny (3 artist + 3 contract + 3 revenue)}
+                    \item 2 beneficiary subtypes
+                    \item \tbl{artist\_wallets} (1:1 với artist)
+                \end{itemize}
             \end{block}
-        \end{column}
-        \begin{column}{0.32\textwidth}
-            \begin{block}{\small Revenue Logs ISA}
-                \centering \textbf{Disjoint, Total}
-                \vspace{0.3em}
 
+            \vspace{0.3em}
+            \begin{exampleblock}{\scriptsize Ví dụ ISA overlapping}
                 \scriptsize
-                Every revenue entry belongs to exactly one source --- mandatory classification
-                \vspace{0.3em}
-
-                $\downarrow$ \tbl{streaming\_revenue\_details} \\
-                $\downarrow$ \tbl{sync\_revenue\_details} \\
-                $\downarrow$ \tbl{live\_revenue\_details}
-            \end{block}
+                \textbf{Sơn Tùng M-TP} xuất hiện trong \textit{cả}
+                \tbl{solo\_artists} (vocal) \textit{và}
+                \tbl{composers} (sáng tác)
+            \end{exampleblock}
         \end{column}
     \end{columns}
-\end{frame}
 
-% ----- Frame: Constraints -----
-\begin{frame}{Integrity Constraints \& Business Rules}
-    \begin{columns}[T]
-        \begin{column}{0.50\textwidth}
-            \textbf{Key technical constraints:}
-            \begin{itemize}\small
-                \item \tbl{tracks.isrc} --- \sql{UNIQUE NOT NULL VARCHAR(12)},
-                      international standard tracking code
-                \item \tbl{contracts.contract\_id} --- \sql{UUID} PK,
-                      prevents ID enumeration attacks
-                \item \tbl{artist\_wallets.balance} --- \sql{CHECK >= 0},
-                      balance never goes negative
-                \item \tbl{revenue\_logs} --- \textbf{Append-only},
-                      no \sql{UPDATE} or \sql{DELETE}
-                \item \tbl{contract\_splits} --- \sql{CHECK XOR(artist\_id, label\_id)},
-                      exactly one beneficiary
-                \item \tbl{bands.member\_count} --- \sql{CHECK >= 2}
-            \end{itemize}
-        \end{column}
-        \begin{column}{0.46\textwidth}
-            \textbf{Business rules:}
-            \begin{itemize}\small
-                \item \textbf{BR-01:} Total \tbl{share\_percentage}
-                      per (contract, track) $\leq$ 1.0 (100\%)
-                \item \textbf{BR-02:} Wallet balance only decreases when
-                      withdrawal \sql{status = 'completed'}
-                \item \textbf{BR-03:} Revenue logs are append-only ---
-                      corrections use a negative-amount reversal entry
-                \item \textbf{BR-05:} Live revenue \textbf{must} link
-                      to a valid \tbl{event\_id}
-            \end{itemize}
-        \end{column}
-    \end{columns}
+    \note{
+        ``ISA overlapping cho Artists vì Sơn Tùng vừa ca sĩ vừa nhạc sĩ
+        --- nếu dùng disjoint sẽ mất thông tin vai trò kép.''
+        Beneficiaries ISA: trước đây contract\_splits dùng polymorphic FK
+        (artist\_id XOR label\_id). Nhóm refactor sang ISA
+        để FK luôn trỏ đúng 1 bảng --- sạch hơn, dễ JOIN hơn.
+    }
 \end{frame}
