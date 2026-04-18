@@ -33,11 +33,15 @@ BEGIN
             INSERT INTO bands (artist_id, formation_date, member_count, is_active)
             VALUES (new_artist_id, CURRENT_DATE, p_member_count, TRUE);
         WHEN 'composer' THEN
-            INSERT INTO composers (artist_id, pen_name, num_compositions)
+            INSERT INTO composers (artist_id, pen_name, total_works)
             VALUES (new_artist_id, COALESCE(p_pen_name, p_stage_name), 0);
         ELSE
             RAISE EXCEPTION 'Invalid artist_type: %. Expected: solo | band | composer', p_artist_type;
     END CASE;
+
+    -- 2b. INSERT artist_roles (V8 table)
+    INSERT INTO artist_roles (artist_id, role)
+    VALUES (new_artist_id, p_artist_type);
 
     -- 3. INSERT artist_wallet (weak entity, 1:1 — must exist)
     INSERT INTO artist_wallets (artist_id, balance)
@@ -46,7 +50,7 @@ BEGIN
     -- 4. INSERT beneficiary (for contract_splits later)
     WITH new_ben AS (
         INSERT INTO beneficiaries (beneficiary_type)
-        VALUES ('artist')
+        VALUES ('A')
         RETURNING beneficiary_id
     )
     INSERT INTO artist_beneficiaries (beneficiary_id, artist_id)

@@ -16,25 +16,6 @@ RETURNS TABLE (
 ) LANGUAGE plpgsql AS $func$
 BEGIN
     RETURN QUERY
-    WITH revenue_typed AS (
-        SELECT r.log_id, r.track_id, r.amount, r.log_date, 'streaming' AS source_type
-        FROM revenue_logs r
-        INNER JOIN streaming_revenue_details rs ON r.log_id = rs.log_id
-        WHERE r.log_date >= make_date(p_year, 1, 1)
-          AND r.log_date < make_date(p_year + 1, 1, 1)
-        UNION ALL
-        SELECT r.log_id, r.track_id, r.amount, r.log_date, 'sync'
-        FROM revenue_logs r
-        INNER JOIN sync_revenue_details rsn ON r.log_id = rsn.log_id
-        WHERE r.log_date >= make_date(p_year, 1, 1)
-          AND r.log_date < make_date(p_year + 1, 1, 1)
-        UNION ALL
-        SELECT r.log_id, r.track_id, r.amount, r.log_date, 'live'
-        FROM revenue_logs r
-        INNER JOIN live_revenue_details rl ON r.log_id = rl.log_id
-        WHERE r.log_date >= make_date(p_year, 1, 1)
-          AND r.log_date < make_date(p_year + 1, 1, 1)
-    )
     SELECT
         ct.nghe_si,
         COALESCE(ct.streaming, 0),
@@ -43,14 +24,32 @@ BEGIN
         COALESCE(ct.streaming, 0) + COALESCE(ct.sync, 0) + COALESCE(ct.live, 0) AS tong
     FROM crosstab(
         format(
-            'SELECT a.stage_name::VARCHAR, rt.source_type::VARCHAR, SUM(rt.amount)::NUMERIC
-             FROM (%s) rt
+            $q$SELECT a.stage_name::VARCHAR, rt.source_type::VARCHAR, SUM(rt.amount)::NUMERIC
+             FROM (
+                SELECT r.log_id, r.track_id, r.amount, r.log_date, 'live'::VARCHAR AS source_type
+                FROM revenue_logs r
+                INNER JOIN live_revenue_details rl ON r.log_id = rl.log_id
+                WHERE r.log_date >= make_date(%1$s, 1, 1)
+                  AND r.log_date < make_date(%1$s + 1, 1, 1)
+                UNION ALL
+                SELECT r.log_id, r.track_id, r.amount, r.log_date, 'streaming'
+                FROM revenue_logs r
+                INNER JOIN streaming_revenue_details rs ON r.log_id = rs.log_id
+                WHERE r.log_date >= make_date(%1$s, 1, 1)
+                  AND r.log_date < make_date(%1$s + 1, 1, 1)
+                UNION ALL
+                SELECT r.log_id, r.track_id, r.amount, r.log_date, 'sync'
+                FROM revenue_logs r
+                INNER JOIN sync_revenue_details rsn ON r.log_id = rsn.log_id
+                WHERE r.log_date >= make_date(%1$s, 1, 1)
+                  AND r.log_date < make_date(%1$s + 1, 1, 1)
+             ) rt
              LEFT JOIN tracks t ON rt.track_id = t.track_id
              LEFT JOIN albums al ON t.album_id = al.album_id
              LEFT JOIN artists a ON al.artist_id = a.artist_id
              GROUP BY a.stage_name, rt.source_type
-             ORDER BY a.stage_name, rt.source_type',
-            'SELECT log_id, track_id, amount, log_date, source_type FROM revenue_typed'
+             ORDER BY a.stage_name, rt.source_type$q$,
+            p_year
         ),
         $$SELECT unnest(ARRAY['live', 'streaming', 'sync'])$$
     ) AS ct(nghe_si VARCHAR, live NUMERIC, streaming NUMERIC, sync NUMERIC)
