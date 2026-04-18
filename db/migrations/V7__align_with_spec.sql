@@ -27,7 +27,10 @@ COMMENT ON COLUMN solo_artists.artist_id    IS 'PK + FK → artists.';
 COMMENT ON COLUMN solo_artists.vocal_range  IS 'Vocal range, e.g. tenor, soprano, baritone.';
 COMMENT ON COLUMN solo_artists.talent_agency IS 'Name of the talent management agency.';
 
--- 2. Fix bands.member_count CHECK to >= 2 ------------------------------------
+-- 2. Add bands.member_count (removed in V2 as derived, restored for SP usage) + CHECK >= 2
+ALTER TABLE bands
+    ADD COLUMN IF NOT EXISTS member_count INT;
+
 ALTER TABLE bands
     DROP CONSTRAINT IF EXISTS bands_member_count_check;
 

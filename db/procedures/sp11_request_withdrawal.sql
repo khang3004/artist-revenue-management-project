@@ -7,9 +7,9 @@
 CREATE OR REPLACE PROCEDURE sp_request_withdrawal(
     p_artist_id       INT,
     p_amount          NUMERIC,
+    OUT new_withdrawal_id INT,
     p_method          VARCHAR DEFAULT 'bank_transfer',
-    p_note            TEXT DEFAULT NULL,
-    OUT new_withdrawal_id INT
+    p_note            TEXT DEFAULT NULL
 ) LANGUAGE plpgsql AS $$
 DECLARE
     v_balance       NUMERIC;

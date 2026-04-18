@@ -1,49 +1,50 @@
 % -----------------------------------------------------------------------------
 % File: settings/commands.tex
-% Description: Custom macros for Artist Revenue Management slides
+% Custom macros for V-Pop Revenue slides
 % -----------------------------------------------------------------------------
 
-% --- Color Definitions ---
-\definecolor{techBlue}{RGB}{0, 85, 150}
-\definecolor{alertRed}{RGB}{200, 30, 30}
+% --- Additional Colors ---
 \definecolor{codeGreen}{RGB}{0, 150, 80}
-\definecolor{DeepBlue}{RGB}{0, 51, 102}
 \definecolor{goldAccent}{RGB}{180, 140, 20}
 \definecolor{lightGray}{RGB}{240, 240, 240}
 
 % --- Text Highlighting ---
-\newcommand{\highlight}[1]{\textbf{\textcolor{techBlue}{#1}}}
-\newcommand{\keyterm}[1]{\textbf{\textcolor{brown}{#1}}}
-\newcommand{\todo}[1]{\textcolor{alertRed}{\textbf{[TODO: #1]}}}
+\newcommand{\highlight}[1]{\textbf{\textcolor{navyPrimary}{#1}}}
+\newcommand{\coral}[1]{\textbf{\textcolor{coralAccent}{#1}}}
+\newcommand{\keyterm}[1]{\textbf{\textcolor{coralAccent}{#1}}}
 
-% --- Table Name Styling ---
-\newcommand{\tbl}[1]{\texttt{\textcolor{techBlue}{#1}}}
+% --- Table Name ---
+\newcommand{\tbl}[1]{\texttt{\textcolor{navyPrimary}{#1}}}
 
 % --- SQL Keyword ---
 \newcommand{\sql}[1]{\texttt{\textcolor{codeGreen}{\small #1}}}
 
-% --- Metric Result Box ---
-\newcommand{\resultBox}[2]{
-    \begin{beamercolorbox}[colsep*=1ex, rounded=true, shadow=false, center]{block title}
-        \small #1 \\
-        \LARGE \textbf{#2}
-    \end{beamercolorbox}
+% --- Stat Box (large number + label) ---
+\newcommand{\statBox}[2]{%
+    \begin{beamercolorbox}[sep=0.5em, center, rounded=true, shadow=true]{block title}
+        {\Huge \textbf{#1}} \\[0.15em]
+        \small #2
+    \end{beamercolorbox}%
 }
 
 % --- KPI Card ---
-\newcommand{\kpiCard}[3]{
-    \begin{beamercolorbox}[sep=0.5em, wd=#1, shadow=true, rounded=true, center]{block title}
+\newcommand{\kpiCard}[3]{%
+    \begin{beamercolorbox}[sep=0.4em, wd=#1, shadow=true, rounded=true, center]{block title}
         \small #2 \\
-        \Large \textbf{\textcolor{techBlue}{#3}}
-    \end{beamercolorbox}
+        \Large \textbf{#3}
+    \end{beamercolorbox}%
 }
 
 % --- Section Header Card ---
-\newcommand{\sectionCard}[2]{
+\newcommand{\sectionCard}[2]{%
     \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{title}
         \usebeamerfont{title}#1\par%
         \vskip0.25em%
         {\usebeamerfont{subtitle}\small \textit{#2}}
     \end{beamercolorbox}
-    \vspace{0.5cm}
+    \vspace{0.5cm}%
 }
+
+% --- Check / Cross marks ---
+\newcommand{\yes}{\textcolor{codeGreen}{\checkmark}}
+\newcommand{\no}{\textcolor{coralAccent}{$\times$}}

@@ -13,7 +13,7 @@ RETURNS TABLE (
     sync       NUMERIC,
     live       NUMERIC,
     tong       NUMERIC
-) LANGUAGE plpgsql AS $$
+) LANGUAGE plpgsql AS $func$
 BEGIN
     RETURN QUERY
     WITH revenue_typed AS (
@@ -55,7 +55,7 @@ BEGIN
         $$SELECT unnest(ARRAY['live', 'streaming', 'sync'])$$
     ) AS ct(nghe_si VARCHAR, live NUMERIC, streaming NUMERIC, sync NUMERIC)
     ORDER BY tong DESC;
-END; $$;
+END; $func$;
 
 -- Alternative: conditional aggregation (FILTER)
 CREATE OR REPLACE FUNCTION sp_revenue_pivot_by_source_v2(

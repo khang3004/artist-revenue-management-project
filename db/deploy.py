@@ -2,6 +2,7 @@ import os
 import glob
 import time
 import json
+import re
 from dataclasses import dataclass, asdict
 from sqlalchemy import create_engine, text
 
@@ -50,13 +51,17 @@ def split_sql(sql: str):
     buffer = []
     in_dollar = False
 
+    # Match all dollar-quoting tags: $$, $func$, $body$, etc.
+    dollar_re = re.compile(r'\$[a-zA-Z_]*\$')
+
     lines = sql.splitlines()
 
     for line in lines:
         stripped = line.strip()
 
-        # toggle $$ block
-        if "$$" in line:
+        # toggle dollar-quoting block (count all $tag$ occurrences)
+        dollar_count = len(dollar_re.findall(line))
+        if dollar_count % 2 == 1:
             in_dollar = not in_dollar
 
         buffer.append(line)

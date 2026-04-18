@@ -1,106 +1,83 @@
 % ============================================================
-% Section 1: Introduction
+% Section 1: Giới thiệu (Slides 2–3)
 % ============================================================
-\section{Introduction}
+\section{Giới thiệu}
 
-\begin{frame}{\secname}
-    \sectionCard{Artist Revenue Management System}{Objectives \textbf{·} Users \textbf{·} Technology Stack}
-\end{frame}
-
-% ----- Frame: Objectives -----
-\begin{frame}{System Objectives}
+% ----- Slide 2: Bối cảnh & Vấn đề -----
+\begin{frame}{Bối cảnh \& Vấn đề}
     \begin{columns}[T]
-        \begin{column}{0.55\textwidth}
-            \begin{block}{Problem Statement}
-                Build a \highlight{V-Pop music royalty \& revenue management} system
-                covering the full artist lifecycle: contracts, music catalog,
-                multi-source revenue streams, and transparent financial settlement
-                via digital wallets.
-            \end{block}
-            \vspace{0.4em}
-            \textbf{Three main revenue streams:}
-            \begin{itemize}
-                \item \textbf{Streaming} --- Spotify, Apple Music, Zing MP3
-                \item \textbf{Sync Licensing} --- films, ads, games
-                \item \textbf{Live Performance} --- concerts \& shows
-            \end{itemize}
+        \begin{column}{0.52\textwidth}
+            \begin{alertblock}{Hiện trạng}
+                \begin{itemize}
+                    \item<1-> Công ty quản lý V-Pop đang dùng \coral{Excel}
+                    \item<2-> Không scale khi quản lý 50+ nghệ sĩ
+                    \item<3-> Không có audit trail cho doanh thu
+                    \item<4-> Không real-time, dễ sai sót thủ công
+                \end{itemize}
+            \end{alertblock}
         \end{column}
-        \begin{column}{0.42\textwidth}
-            \begin{exampleblock}{Core Requirements}
-                \begin{itemize}\small
-                    \item Contract management \& revenue splitting by percentage
-                    \item Digital wallets + financial audit trail
-                    \item Real-time analytics dashboard
-                    \item Automated ETL pipeline from multiple data sources
-                    \item Data integrity (append-only revenue logs)
+        \begin{column}{0.44\textwidth}
+            \begin{exampleblock}{Giải pháp}
+                Xây dựng \highlight{hệ thống CSDL chuyên biệt}:
+                \begin{itemize}
+                    \item Quản lý nghệ sĩ, hợp đồng, doanh thu
+                    \item 3 nguồn thu: Streaming, Sync, Live
+                    \item Ví điện tử + rút tiền minh bạch
+                    \item Dashboard phân tích real-time
                 \end{itemize}
             \end{exampleblock}
         \end{column}
     \end{columns}
+
+    \note{
+        Kể câu chuyện: ``Hãy tưởng tượng một label quản lý 50 nghệ sĩ
+        bằng Excel --- mỗi tháng phải chia tiền cho hàng trăm bài hát
+        từ 3 nguồn thu khác nhau. Sai 1 con số = mất niềm tin nghệ sĩ.''
+        Đó là lý do nhóm chọn đề tài này.
+    }
 \end{frame}
 
-% ----- Frame: User Personas -----
-\begin{frame}{User Personas}
+% ----- Slide 3: Yêu cầu hệ thống -----
+\begin{frame}{Yêu cầu hệ thống}
     \begin{columns}[T]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{\small Artist}
-                \scriptsize View personal revenue, track albums/tracks,
-                check wallet balance, view event schedule, request withdrawals
-            \end{block}
-            \vspace{0.4em}
-            \begin{block}{\small Record Label}
-                \scriptsize Manage signed artists, create \& manage contracts,
-                distribute revenue via contract splits, monitor revenue logs
-            \end{block}
+        \begin{column}{0.50\textwidth}
+            \textbf{4 nhóm người dùng:}
+            \begin{enumerate}
+                \item \textbf{Artist} --- xem doanh thu, ví, rút tiền
+                \item \textbf{Label} --- quản lý hợp đồng, chia doanh thu
+                \item \textbf{Manager} --- lịch biểu diễn, đặt venue
+                \item \textbf{Admin} --- thống kê toàn hệ thống, audit
+            \end{enumerate}
+
+            \vspace{0.5em}
+            \textbf{Yêu cầu chính:}
+            \begin{itemize}\small
+                \item Quản lý nghệ sĩ (solo / band / composer)
+                \item Hợp đồng + chia tỷ lệ doanh thu
+                \item Doanh thu đa nguồn (streaming, sync, live)
+                \item Ví điện tử + rút tiền
+            \end{itemize}
         \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{\small Manager / Booking Agent}
-                \scriptsize Manage performance schedules, book venues,
-                track event status
-            \end{block}
-            \vspace{0.4em}
-            \begin{block}{\small System Administrator}
-                \scriptsize System-wide statistics, consolidated revenue reports,
-                analytics dashboard, wallet audit
+        \begin{column}{0.46\textwidth}
+            \begin{block}{Business Rules}
+                \begin{itemize}\small
+                    \item \textbf{BR-01:} Tổng \tbl{share\_percentage} mỗi
+                          (contract, track) $\leq$ 1.0
+                    \item \textbf{BR-02:} Wallet chỉ giảm khi withdrawal
+                          \sql{status = 'completed'}
+                    \item \textbf{BR-03:} Revenue logs \coral{append-only}
+                          --- sửa bằng reversal entry
+                    \item \textbf{BR-05:} Live revenue \textbf{bắt buộc}
+                          liên kết \tbl{event\_id}
+                \end{itemize}
             \end{block}
         \end{column}
     \end{columns}
-\end{frame}
 
-% ----- Frame: Tech Stack -----
-\begin{frame}{Technology Stack \& Actual Data}
-    \begin{columns}[T]
-        \begin{column}{0.52\textwidth}
-            \begin{tabular}{@{}ll@{}}
-                \toprule
-                \textbf{Component}    & \textbf{Technology} \\
-                \midrule
-                Database      & Neon Serverless PostgreSQL 16 \\
-                Stored Proc   & 8 SQL Functions (plpgsql) \\
-                Frontend      & Streamlit + Plotly \\
-                ETL           & Python + SQLAlchemy \\
-                Data Sources  & MusicBrainz API + Ticketbox \\
-                VCS           & Git (feat/fix $\to$ develop $\to$ main) \\
-                \bottomrule
-            \end{tabular}
-        \end{column}
-        \begin{column}{0.44\textwidth}
-            \textbf{Loaded data (post-ETL):}
-            \vspace{0.3em}
-            \begin{tabular}{@{}lr@{}}
-                \toprule
-                \textbf{Entity}      & \textbf{Records} \\
-                \midrule
-                Artists              & 40 \\
-                Albums               & 781 \\
-                Tracks               & 250 \\
-                Revenue Logs         & 3{,}180 \\
-                Contracts            & 45 \\
-                Contract Splits      & 498 \\
-                Events               & 81 \\
-                Artist Wallets       & 22 \\
-                \bottomrule
-            \end{tabular}
-        \end{column}
-    \end{columns}
+    \note{
+        Nhấn mạnh tính thực tế: ``Đây không phải bài tập giả định ---
+        dữ liệu lấy từ MusicBrainz API và Ticketbox thực tế.''
+        Business rules là yếu tố quan trọng nhất --- tất cả SP đều
+        phải tuân thủ các rules này.
+    }
 \end{frame}

@@ -7,8 +7,9 @@
 CREATE OR REPLACE PROCEDURE sp_record_revenue(
     p_track_id        INT,
     p_amount          NUMERIC,
-    p_currency        VARCHAR DEFAULT 'VND',
     p_revenue_type    VARCHAR,            -- 'streaming' | 'sync' | 'live'
+    OUT new_log_id    BIGINT,
+    p_currency        VARCHAR DEFAULT 'VND',
     p_raw_data        JSONB DEFAULT '{}',
     -- Streaming params
     p_stream_count    BIGINT DEFAULT NULL,
@@ -19,8 +20,7 @@ CREATE OR REPLACE PROCEDURE sp_record_revenue(
     p_usage_type      VARCHAR DEFAULT NULL,
     -- Live params
     p_event_id        INT DEFAULT NULL,
-    p_ticket_sold     INT DEFAULT NULL,
-    OUT new_log_id    BIGINT
+    p_ticket_sold     INT DEFAULT NULL
 ) LANGUAGE plpgsql AS $$
 BEGIN
     -- Validation

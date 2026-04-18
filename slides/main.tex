@@ -1,35 +1,40 @@
-% Aspectratio 16:9 for modern projectors
+% ============================================================
+% Hệ thống Quản lý Bản quyền & Doanh thu Âm nhạc V-Pop
+% Compile: xelatex -shell-escape main.tex
+% ============================================================
 \documentclass[aspectratio=169, 11pt, xcolor=table]{beamer}
 
-% Import custom style (reuse HCMUS beamer theme)
+% Import custom style
 \usepackage{settings/hcmus_beamer}
 \input{settings/packages}
 \input{settings/commands}
 
-% Define image directories
+% Image directories
 \graphicspath{ {./images/} {./figures/} }
 
+% Speaker notes — uncomment ONE line below to show notes:
+% \setbeameroption{show notes on second screen=right}
+% \setbeameroption{show notes}
+
 % --- PRESENTATION METADATA ---
-\titlegraphic{
-    \includegraphics[height=1.5cm]{hcmus_logo}
+\title[Quản lý Doanh thu V-Pop]{%
+    \textbf{Hệ thống Quản lý Bản quyền} \\
+    \textbf{\& Doanh thu Âm nhạc V-Pop}%
 }
 
-\title[{Artist Revenue Management System}]{
-    \textbf{Artist Revenue Management System} \\
-    \small Database Design \& Implementation
-}
+\subtitle{MDL018 --- Tổ chức và Quản lý Dữ liệu}
 
-\subtitle{MDL018 -- Data Organization and Management}
-
-\author[Group XX]{
+\author[Nhóm]{%
     \small
-    \begin{tabular}{c c c c}
-        \textbf{Member A}          & \textbf{Member B}          & \textbf{Member C}          & \textbf{Member D}          \\
-        \scriptsize \textit{ID\_A}   & \scriptsize \textit{ID\_B}   & \scriptsize \textit{ID\_C}   & \scriptsize \textit{ID\_D}
-    \end{tabular}
+    \begin{tabular}{c c}
+        \textbf{KhangDSnAI}                        & \textbf{Khanh Vu Nguyen Nang}           \\
+        \scriptsize \textit{Intro \& Outro}         & \scriptsize \textit{Demo / Data storyteller} \\[0.4em]
+        \textbf{Hung Mai}                           & \textbf{Thanh Nguyen}                   \\
+        \scriptsize \textit{ERD + Stored Procedures} & \scriptsize \textit{Documentation + Weak entities}
+    \end{tabular}%
 }
 
-\institute[HCMUS]{
+\institute[HCMUS]{%
     \vspace{0.08em}
     \begin{columns}[c]
         \begin{column}{0.4\textwidth}
@@ -38,38 +43,42 @@
         \end{column}
         \begin{column}{0.6\textwidth}
             \flushleft
-            \scriptsize Faculty of Information Technology \\
-            \small \textbf{University of Science -- VNU-HCM}
+            \scriptsize Khoa Công nghệ Thông tin \\
+            \small \textbf{Trường ĐH Khoa học Tự nhiên --- ĐHQG-HCM}
         \end{column}
-    \end{columns}
+    \end{columns}%
 }
 
-\date{\small \today}
+\date{\small GVHD: [Tên giảng viên]}
 
 \setbeamertemplate{navigation symbols}{}
-\setbeamertemplate{footline}{
-    \hbox{
-        \begin{beamercolorbox}[wd=1\paperwidth, ht=2.25ex, dp=1ex, right]{}
-            \color{gray} \small \insertframenumber{} / \inserttotalframenumber \hspace*{2em}
-        \end{beamercolorbox}
-    }
-    \vspace*{0.5em}
+\setbeamertemplate{footline}{%
+    \hbox{%
+        \begin{beamercolorbox}[wd=\paperwidth, ht=2.25ex, dp=1ex, right]{}
+            \color{gray}\small \insertframenumber{} / \inserttotalframenumber \hspace*{2em}
+        \end{beamercolorbox}%
+    }%
+    \vspace*{0.5em}%
 }
 
-% --- MAIN DOCUMENT ---
+% ============================================================
 \begin{document}
 
-% 1. Title Slide
-\begin{frame}
+% --- Slide 1: Title ---
+\begin{frame}[plain, noframenumbering]
     \titlepage
+    \note{
+        KhangDSnAI mở đầu, giới thiệu nhóm.
+        Giới thiệu nhanh đề tài và vai trò từng thành viên.
+    }
 \end{frame}
 
-% 2. Table of Contents
-\begin{frame}{Table of Contents}
+% --- Mục lục ---
+\begin{frame}{Nội dung trình bày}
     \tableofcontents[hideallsubsections]
 \end{frame}
 
-% 3. Modular Content — mỗi thành viên làm 1 section
+% --- Sections ---
 \include{sections/01_intro/_master}
 \include{sections/02_erd/_master}
 \include{sections/03_implementation/_master}
@@ -77,23 +86,27 @@
 \include{sections/05_demo/_master}
 \include{sections/06_conclusion/_master}
 
-% --- FINAL SLIDE ---
-\begin{frame}[plain]
+% --- Slide 14: Q&A / Outro ---
+\begin{frame}[plain, noframenumbering]
     \centering
     \vspace{1cm}
-    {\Huge \bfseries \textcolor{darkred}{Thank you for your attention!}}
+    {\Huge \bfseries \textcolor{coralAccent}{Cảm ơn thầy/cô!}}
 
     \vspace{1.5cm}
     {\LARGE \textbf{Q \& A}} \\
     \vspace{0.5em}
-    \textit{\color{gray} We are ready to answer your questions.}
+    \textit{\color{gray}Nhóm sẵn sàng trả lời câu hỏi.}
 
-    \vspace{2cm}
-    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block title}
-        \textbf{Source Code \& Database:} \\
-        \vspace{0.3em}
-        \footnotesize \url{https://github.com/<org>/artist-revenue-management}
-    \end{beamercolorbox}
+    \vspace{1.5cm}
+    {\scriptsize KhangDSnAI --- closing}
+
+    \note{
+        KhangDSnAI đóng outro.
+        Chuẩn bị câu hỏi thường gặp:
+        (1) Tại sao chọn ISA thay polymorphic FK?
+        (2) Neon vs Docker local?
+        (3) Append-only revenue hoạt động thế nào?
+    }
 \end{frame}
 
 \end{document}
