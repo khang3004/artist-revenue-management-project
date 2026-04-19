@@ -177,4 +177,38 @@ public actor DatabaseClient {
             throw DatabaseError.queryFailed(error.localizedDescription)
         }
     }
+
+    /// Calls a PostgreSQL stored procedure via `CALL sp_name(...)` and optionally
+    /// reads an OUT parameter value from the first column of the result row.
+    ///
+    /// PostgreSQL 14+ propagates OUT parameters through the SELECT-compatible
+    /// `CALL` result set, so this method reads the first row (if any) and decodes
+    /// the given column type `T`. Returns `nil` if the procedure produces no rows
+    /// (e.g., void procedures with only side-effects).
+    ///
+    /// - Parameters:
+    ///   - sql:    A `PostgresQuery` containing the full `CALL sp_name(...)` statement.
+    ///   - decode: Closure that decodes the first result row into an OUT-param value `T`.
+    ///             Pass `nil` if the procedure returns no value.
+    /// - Returns: The decoded OUT-parameter value, or `nil`.
+    /// - Throws:  `DatabaseError.queryFailed` on server error.
+    public func callProcedure<T: Sendable>(
+        _ sql: PostgresQuery,
+        decode: (@Sendable (PostgresRow) throws -> T)? = nil
+    ) async throws -> T? {
+        await awaitReady()
+        do {
+            let rows: PostgresRowSequence = try await client.query(sql, logger: logger)
+            guard let decoder = decode else { return nil }
+            for try await row in rows {
+                return try decoder(row)
+            }
+            return nil
+        } catch let error as DatabaseError {
+            throw error
+        } catch {
+            logger.error("DatabaseClient.callProcedure failed: \(String(reflecting: error))")
+            throw DatabaseError.queryFailed(error.localizedDescription)
+        }
+    }
 }

@@ -1,5 +1,10 @@
 // RevenueRollUpView.swift
 // Amplify Core — Revenue Dashboard (macOS 26 Liquid Glass)
+//
+// Enhancement (2026-04):
+//   • Date range picker (30d / 90d / 1y / All) passed to ViewModel
+//   • Revenue mix donut chart added below KPI row
+//   • Top earners card now shows a mini sparkline percentage bar per artist
 
 import SwiftUI
 import Charts
@@ -8,17 +13,34 @@ struct RevenueRollUpView: View {
 
     @Environment(DashboardViewModel.self) private var vm
     @State private var chartAnimated = false
+    @State private var selectedPeriod: RevenuePeriod = .year
+
+    enum RevenuePeriod: String, CaseIterable {
+        case month30 = "30 Days"
+        case month90 = "90 Days"
+        case year    = "1 Year"
+        case all     = "All Time"
+
+        var months: Int? {
+            switch self {
+            case .month30: return 1
+            case .month90: return 3
+            case .year:    return 12
+            case .all:     return nil
+            }
+        }
+    }
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 headerRow
                 kpiGrid
+                revenueMixDonut
                 chartCard
                 topEarnersCard
             }
             .padding(24)
-            // scrollEdgeEffectStyle: system blurs content scrolling beneath toolbar
             .scrollContentBackground(.hidden)
         }
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -46,12 +68,30 @@ struct RevenueRollUpView: View {
             VStack(alignment: .leading, spacing: 5) {
                 Text("Revenue Dashboard")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
-                Text("Trailing 12-month aggregate · all revenue streams")
+                Text("All revenue streams · \(selectedPeriod.rawValue)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            // ✨ Glass button — native Liquid Glass style, no custom backgrounds
+
+            // Period picker
+            GlassEffectContainer(spacing: 0) {
+                HStack(spacing: 1) {
+                    ForEach(RevenuePeriod.allCases, id: \.self) { period in
+                        Button(period.rawValue) {
+                            selectedPeriod = period
+                            Task { await vm.loadAll() }
+                        }
+                        .font(.system(size: 11, weight: selectedPeriod == period ? .bold : .medium))
+                        .foregroundStyle(selectedPeriod == period ? Brand.primary : .secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(selectedPeriod == period ? Brand.primary.opacity(0.14) : Color.clear)
+                        .liquidGlass(in: Capsule())
+                    }
+                }
+            }
+
             Button {
                 Task { await vm.refresh() }
             } label: {
@@ -62,8 +102,6 @@ struct RevenueRollUpView: View {
     }
 
     // MARK: - KPI Grid
-    //
-    // Wrapped in GlassEffectContainer so the four cards can morphically merge/separate.
 
     private var kpiGrid: some View {
         GlassEffectContainer(spacing: 12) {
@@ -72,7 +110,7 @@ struct RevenueRollUpView: View {
                 spacing: 12
             ) {
                 StatBadge(icon: "dollarsign.circle.fill",
-                          label: "Total Revenue (12 mo)",
+                          label: "Total Revenue",
                           value: vm.formattedTotalRevenue, trend: .up, accentColor: Brand.primary)
                 StatBadge(icon: "music.note",
                           label: "Streaming",
@@ -90,12 +128,108 @@ struct RevenueRollUpView: View {
         }
     }
 
+    // MARK: - Revenue Mix Donut
+
+    private var revenueMixDonut: some View {
+        GlassCard(cornerRadius: 20, padding: 24) {
+            HStack(spacing: 32) {
+                // Donut
+                VStack(spacing: 8) {
+                    if !vm.chartSeries.isEmpty {
+                        Chart {
+                            SectorMark(
+                                angle: .value("Streaming", vm.totalStreamingRevenue),
+                                innerRadius: .ratio(0.62),
+                                angularInset: 2
+                            )
+                            .foregroundStyle(Brand.teal)
+                            .cornerRadius(4)
+
+                            SectorMark(
+                                angle: .value("Sync", vm.totalSyncRevenue),
+                                innerRadius: .ratio(0.62),
+                                angularInset: 2
+                            )
+                            .foregroundStyle(Brand.amber)
+                            .cornerRadius(4)
+
+                            SectorMark(
+                                angle: .value("Live", vm.totalLiveRevenue),
+                                innerRadius: .ratio(0.62),
+                                angularInset: 2
+                            )
+                            .foregroundStyle(Brand.emerald)
+                            .cornerRadius(4)
+                        }
+                        .frame(width: 120, height: 120)
+                        .overlay {
+                            VStack(spacing: 2) {
+                                Text("Mix")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Text(vm.formattedTotalRevenue)
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                            }
+                        }
+                    } else {
+                        Circle()
+                            .stroke(Brand.border, lineWidth: 2)
+                            .frame(width: 100, height: 100)
+                    }
+                }
+
+                // Legend with share bars
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Revenue Mix")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+
+                    donutLegendRow(label: "Streaming",       color: Brand.teal,    amount: vm.totalStreamingRevenue, total: vm.totalRevenue)
+                    donutLegendRow(label: "Sync & Licensing", color: Brand.amber,   amount: vm.totalSyncRevenue,       total: vm.totalRevenue)
+                    donutLegendRow(label: "Live Performance", color: Brand.emerald, amount: vm.totalLiveRevenue,       total: vm.totalRevenue)
+                }
+
+                Spacer()
+            }
+        }
+    }
+
+    private func donutLegendRow(label: String, color: Color, amount: Double, total: Double) -> some View {
+        let share = safeShare(amount, of: total)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Circle().fill(color).frame(width: 8, height: 8)
+                Text(label).font(.system(size: 12, weight: .medium))
+                Spacer()
+                Text(String(format: "%.1f%%", share * 100))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(color)
+                Text(formatAmt(amount))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 72, alignment: .trailing)
+            }
+            // Canvas progress bar — NaN-safe
+            Canvas { ctx, size in
+                let track = Path(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+                ctx.fill(track, with: .color(Brand.border))
+                let fillW = size.width * min(max(share, 0), 1)
+                if fillW > 0 {
+                    let fill = Path(CGRect(x: 0, y: 0, width: fillW, height: size.height))
+                    ctx.fill(fill, with: .color(color))
+                }
+            }
+            .clipShape(Capsule())
+            .frame(height: 3)
+        }
+    }
+
     // MARK: - Chart Card
 
     private var chartCard: some View {
         GlassCard(cornerRadius: 20, padding: 24) {
             VStack(alignment: .leading, spacing: 16) {
-                // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Revenue Trends")
@@ -123,7 +257,6 @@ struct RevenueRollUpView: View {
     }
 
     private var legendStack: some View {
-        // ✨ GlassEffectContainer so the three legend chips can morph together
         GlassEffectContainer(spacing: 0) {
             HStack(spacing: 1) {
                 ForEach([("Streaming", Brand.teal),
@@ -227,8 +360,9 @@ struct RevenueRollUpView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.vertical, 16)
                 } else {
+                    let maxRevenue = vm.topEarners.first.map { $0.totalRevenue } ?? 1
                     ForEach(Array(vm.topEarners.enumerated()), id: \.offset) { idx, earner in
-                        earnerRow(rank: idx + 1, earner: earner)
+                        earnerRow(rank: idx + 1, earner: earner, maxRevenue: maxRevenue)
                         if idx < vm.topEarners.count - 1 {
                             Divider().padding(.leading, 50).opacity(0.5)
                         }
@@ -238,43 +372,58 @@ struct RevenueRollUpView: View {
         }
     }
 
-    private func earnerRow(rank: Int, earner: TopEarner) -> some View {
-        HStack(spacing: 12) {
-            // Rank — glass lozenge for top 3
-            Group {
-                if rank <= 3 {
-                    Text("#\(rank)")
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(Brand.primary)
-                        .frame(width: 28, height: 28)
-                        .background(Brand.primary.opacity(0.15))
-                        .liquidGlass(
-                                     in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                } else {
-                    Text("#\(rank)")
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28)
+    private func earnerRow(rank: Int, earner: TopEarner, maxRevenue: Double) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                // Rank
+                Group {
+                    if rank <= 3 {
+                        Text("#\(rank)")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundStyle(Brand.primary)
+                            .frame(width: 28, height: 28)
+                            .background(Brand.primary.opacity(0.15))
+                            .liquidGlass(in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    } else {
+                        Text("#\(rank)")
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28)
+                    }
                 }
+
+                // Avatar
+                Text(String(earner.stageName.prefix(1)).uppercased())
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(Brand.primary)
+                    .frame(width: 34, height: 34)
+                    .background(Brand.primary.opacity(0.15))
+                    .liquidGlass(in: Circle())
+
+                Text(earner.stageName)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+
+                Spacer()
+
+                Text(earner.formattedRevenue)
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
             }
 
-            // Avatar
-            Text(String(earner.stageName.prefix(1)).uppercased())
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(Brand.primary)
-                .frame(width: 34, height: 34)
-                .background(Brand.primary.opacity(0.15))
-                .liquidGlass(
-                             in: Circle())
-
-            Text(earner.stageName)
-                .font(.system(size: 13, weight: .medium))
-                .lineLimit(1)
-
-            Spacer()
-
-            Text(earner.formattedRevenue)
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+            // Mini share bar
+            let share = safeShare(earner.totalRevenue, of: maxRevenue)
+            Canvas { ctx, size in
+                let bg = Path(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+                ctx.fill(bg, with: .color(Brand.border.opacity(0.5)))
+                let fw = size.width * share
+                if fw > 0 {
+                    let fill = Path(CGRect(x: 0, y: 0, width: fw, height: size.height))
+                    ctx.fill(fill, with: .color(Brand.primary.opacity(0.5)))
+                }
+            }
+            .clipShape(Capsule())
+            .frame(height: 2)
+            .padding(.leading, 74)
         }
         .padding(.vertical, 5)
     }

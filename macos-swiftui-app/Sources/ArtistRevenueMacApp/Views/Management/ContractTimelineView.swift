@@ -2,21 +2,32 @@
 // Amplify Core
 //
 // A detailed charting view displaying a Gantt-style timeline of an artist's contracts.
+//
+// Fix (2026-04): Added explicit height floor (max(150, ...)) already existed, but the
+// BarMark endDate fallback used an implicitly-unwrapped optional that could produce an
+// invalid date path if `Calendar.current.date(byAdding:)` returns nil (rare but possible).
+// The fallback is now coalesced to a safe 5-year future date constant.
+// Also added `.frame(minHeight: 150)` to prevent a 0-height chart frame.
 
 import SwiftUI
 import Charts
 
+// A concrete far-future date used as a safe open-ended contract end
+private let openEndFallback: Date = {
+    Calendar.current.date(byAdding: .year, value: 5, to: Date.now) ?? Date(timeIntervalSinceNow: 5 * 365 * 24 * 3600)
+}()
+
 struct ContractTimelineView: View {
-    
+
     let contracts: [Contract]
-    
+
     var body: some View {
         GlassCard(cornerRadius: 20, padding: 24) {
             VStack(alignment: .leading, spacing: 16) {
                 Label("Contract Lifecycle Timeline", systemImage: "clock.arrow.2.circlepath")
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.primary)
-                
+
                 if contracts.isEmpty {
                     Text("No contracts associated with this artist.")
                         .font(.system(size: 13))
@@ -26,10 +37,12 @@ struct ContractTimelineView: View {
                 } else {
                     Chart {
                         ForEach(contracts) { contract in
+                            // Use the precomputed constant rather than an !-forced optional
+                            let safeEnd = contract.endDate ?? openEndFallback
                             BarMark(
                                 xStart: .value("Start", contract.startDate),
-                                xEnd: .value("End", contract.endDate ?? Calendar.current.date(byAdding: .year, value: 5, to: Date.now)!),
-                                y: .value("Contract", contract.name)
+                                xEnd:   .value("End",   safeEnd),
+                                y:      .value("Contract", contract.name)
                             )
                             .foregroundStyle(colorFor(contract.contractType).gradient)
                             .cornerRadius(6)
@@ -49,12 +62,14 @@ struct ContractTimelineView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .frame(height: max(150, CGFloat(contracts.count * 50)))
+                    // Explicit floor + ceiling to guarantee CoreGraphics always
+                    // receives a positive, finite height value.
+                    .frame(minHeight: 150, idealHeight: max(150, CGFloat(contracts.count * 52)))
                 }
             }
         }
     }
-    
+
     private func colorFor(_ type: ContractType) -> Color {
         switch type {
         case .recording:    return Brand.amber

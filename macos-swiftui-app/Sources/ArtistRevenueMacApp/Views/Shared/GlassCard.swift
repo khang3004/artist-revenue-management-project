@@ -8,6 +8,12 @@
 //   • Prefer .regular for content cards; .tinted for accent containers.
 //   • Do NOT stack custom backgrounds inside glass — let the material handle depth.
 //   • Wrap adjacent glass elements in GlassEffectContainer for fluid morphing.
+//
+// Fix (2026-04): Removed rotation3DEffect from all card variants.
+// rotation3DEffect produces a degenerate perspective matrix when a view's frame
+// is zero-sized during the first layout pass (common inside LazyVGrid / LazyVStack),
+// which causes "passed an invalid numeric value (NaN)" CoreGraphics errors.
+// A simple scaleEffect + shadow on hover is sufficient and NaN-safe.
 
 import SwiftUI
 
@@ -49,13 +55,15 @@ public struct GlassCard<Content: View>: View {
             .liquidGlass(
                 in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )
-            .shadow(color: isHovered ? Brand.primary.opacity(0.15) : .clear, radius: 10, y: 4)
-            .rotation3DEffect(
-                .degrees(isHovered ? 2 : 0),
-                axis: (x: 1, y: 0, z: 0)
+            // Shadow feedback on hover — NaN-safe (no transform matrix involved)
+            .shadow(
+                color: isHovered ? Brand.primary.opacity(0.18) : .black.opacity(0.06),
+                radius: isHovered ? 14 : 6,
+                y: isHovered ? 6 : 2
             )
-            .scaleEffect(isHovered ? 1.01 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isHovered)
+            // Gentle scale — safe because it never reaches 0
+            .scaleEffect(isHovered ? 1.012 : 1.0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: isHovered)
             .onHover { hovering in
                 isHovered = hovering
             }
@@ -65,7 +73,6 @@ public struct GlassCard<Content: View>: View {
 // MARK: - TintedGlassCard
 
 /// An accent-tinted variant of `GlassCard` for headers, hero sections, or focused elements.
-/// Uses `.tinted` glass which adds a subtle brand color wash to the glass material.
 public struct TintedGlassCard<Content: View>: View {
 
     private let cornerRadius: CGFloat
@@ -90,17 +97,17 @@ public struct TintedGlassCard<Content: View>: View {
     public var body: some View {
         content
             .padding(padding)
-            .background(tint.opacity(0.15))
+            .background(tint.opacity(0.12))
             .liquidGlass(
                 in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )
-            .shadow(color: isHovered ? tint.opacity(0.3) : .clear, radius: 12, y: 4)
-            .rotation3DEffect(
-                .degrees(isHovered ? 1.5 : 0),
-                axis: (x: 1, y: 0, z: 0)
+            .shadow(
+                color: isHovered ? tint.opacity(0.28) : .black.opacity(0.06),
+                radius: isHovered ? 16 : 6,
+                y: isHovered ? 6 : 2
             )
-            .scaleEffect(isHovered ? 1.01 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isHovered)
+            .scaleEffect(isHovered ? 1.012 : 1.0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: isHovered)
             .onHover { hovering in
                 isHovered = hovering
             }
@@ -128,13 +135,13 @@ public struct GlassCardModifier: ViewModifier {
             .liquidGlass(
                 in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )
-            .shadow(color: isHovered ? Brand.primary.opacity(0.15) : .clear, radius: 10, y: 4)
-            .rotation3DEffect(
-                .degrees(isHovered ? 2 : 0),
-                axis: (x: 1, y: 0, z: 0)
+            .shadow(
+                color: isHovered ? Brand.primary.opacity(0.18) : .black.opacity(0.06),
+                radius: isHovered ? 14 : 6,
+                y: isHovered ? 6 : 2
             )
-            .scaleEffect(isHovered ? 1.01 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isHovered)
+            .scaleEffect(isHovered ? 1.012 : 1.0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: isHovered)
             .onHover { hovering in
                 isHovered = hovering
             }
@@ -153,7 +160,7 @@ public extension View {
     /// Wraps the receiver in a tinted Liquid Glass card.
     func tintedGlassCard(cornerRadius: CGFloat = 24, padding: CGFloat = 24, tint: Color = Brand.primary) -> some View {
         self.padding(padding)
-            .background(tint.opacity(0.15))
+            .background(tint.opacity(0.12))
             .liquidGlass(
                 in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )

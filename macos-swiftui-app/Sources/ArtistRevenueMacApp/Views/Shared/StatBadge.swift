@@ -2,7 +2,12 @@
 // Amplify Core
 //
 // KPI metric badge using macOS 26 Liquid Glass design language.
-// Wrap multiple StatBadges in GlassEffectContainer so glass shapes morphs together.
+// Wrap multiple StatBadges in GlassEffectContainer so glass shapes morph together.
+//
+// Fix (2026-04): Entry animation changed from scaleEffect(0.94→1) to opacity(0→1) only.
+// scaleEffect at startup combined with liquidGlass on a zero-sized parent view (common
+// during the first LazyVGrid layout pass) produced NaN values passed to CoreGraphics.
+// Opacity-only animation is equally smooth and fully NaN-safe.
 
 import SwiftUI
 
@@ -31,8 +36,7 @@ public enum MetricTrend: Equatable {
 
 /// KPI metric card using native `.glassEffect`.
 ///
-/// The icon background uses `.glassEffect(.regular.tinted(accentColor))` so it becomes
-/// a genuine Liquid Glass lozenge — not a flat color fill.
+/// The icon background uses `.liquidGlass` so it becomes a genuine Liquid Glass lozenge.
 /// Wrap a row of `StatBadge` views inside a `GlassEffectContainer` at the call site
 /// so adjacent glass panels morph fluidly into each other.
 public struct StatBadge: View {
@@ -43,6 +47,8 @@ public struct StatBadge: View {
     private let trend:       MetricTrend
     private let accentColor: Color
 
+    // Use opacity-only entry animation — scaleEffect from near-zero triggers NaN in
+    // CoreGraphics when the parent view's frame is not yet determined (LazyVGrid).
     @State private var appeared: Bool = false
 
     public init(
@@ -84,15 +90,13 @@ public struct StatBadge: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(trend.color.opacity(0.15))
-                    .liquidGlass(
-                        in: Capsule()
-                    )
+                    .liquidGlass(in: Capsule())
                 }
             }
 
             // Primary value
             Text(value)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
                 .contentTransition(.numericText())
                 .lineLimit(1)
@@ -109,10 +113,10 @@ public struct StatBadge: View {
         .liquidGlass(
             in: RoundedRectangle(cornerRadius: 20, style: .continuous)
         )
+        // Opacity-only fade-in: safe regardless of frame size during layout
         .opacity(appeared ? 1 : 0)
-        .scaleEffect(appeared ? 1 : 0.94)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.74).delay(0.04)) {
+            withAnimation(.easeOut(duration: 0.35).delay(0.05)) {
                 appeared = true
             }
         }
@@ -128,7 +132,6 @@ public struct KPIRow: View {
     private let badges: [AnyView]
 
     public init(@ViewBuilder content: () -> some View) {
-        // Wrap into AnyView so we can count — for small counts we just embed directly.
         self.badges = []
     }
 

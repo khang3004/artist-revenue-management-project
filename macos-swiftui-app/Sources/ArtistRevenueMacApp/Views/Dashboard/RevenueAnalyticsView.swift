@@ -3,6 +3,11 @@
 //
 // Revenue Analytics module: artist×month rollup table (SP1),
 // source pivot stacked bar (SP2), and top tracks table — mirrors Streamlit page 3.
+//
+// Fix (2026-04): categoryCard's share bar replaced GeometryReader with a
+// Canvas-based progress bar. GeometryReader inside LazyVGrid initially reports
+// width = 0, making `geo.size.width * share` produce NaN passed to CoreGraphics.
+// Canvas always receives a valid rect from its context and is NaN-safe.
 
 import SwiftUI
 import Charts
@@ -26,6 +31,8 @@ struct RevenueAnalyticsView: View {
             }
             .padding(24)
         }
+        .scrollEdgeEffectStyle(.soft, for: .top)
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(.clear)
         .task { await vm.loadAll() }
         .overlay {
@@ -120,10 +127,13 @@ struct RevenueAnalyticsView: View {
                     }
                     .chartOverlay { proxy in
                         GeometryReader { geo in
-                            if let selectedDate = selectedDate,
+                            if let selectedDate,
                                let xPosition = proxy.position(forX: selectedDate) {
-                                // Find selected data
-                                if let pivot = vm.pivotData.first(where: { Calendar.current.isDate($0.month, equalTo: selectedDate, toGranularity: .month) }) {
+                                // Clamp tooltip x so it never escapes the chart bounds
+                                let safeX = xPosition.nanSafe.clamped(lo: 0, hi: max(0, geo.size.width))
+                                if let pivot = vm.pivotData.first(where: {
+                                    Calendar.current.isDate($0.month, equalTo: selectedDate, toGranularity: .month)
+                                }) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(pivot.month.formatted(.dateTime.month(.wide).year()))
                                             .font(.system(size: 12, weight: .bold))
@@ -140,8 +150,9 @@ struct RevenueAnalyticsView: View {
                                     .background(.regularMaterial)
                                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                     .shadow(radius: 6)
-                                    .position(x: xPosition, y: geo.size.height / 2)
-                                    .offset(x: xPosition > geo.size.width / 2 ? -70 : 70) // Prevent going off-screen
+                                    // Use safe x position — never produces NaN position()
+                                    .position(x: safeX, y: max(0, geo.size.height / 2))
+                                    .offset(x: safeX > geo.size.width / 2 ? -80 : 80)
                                 }
                             }
                         }
@@ -170,21 +181,21 @@ struct RevenueAnalyticsView: View {
             categoryCard(
                 title: "Streaming",
                 amount: vm.totalStreamingRevenue,
-                share: vm.totalRevenue > 0 ? vm.totalStreamingRevenue / vm.totalRevenue : 0,
+                share: safeShare(vm.totalStreamingRevenue, of: vm.totalRevenue),
                 color: Brand.teal,
                 icon: "waveform"
             )
             categoryCard(
                 title: "Sync & Licensing",
                 amount: vm.totalSyncRevenue,
-                share: vm.totalRevenue > 0 ? vm.totalSyncRevenue / vm.totalRevenue : 0,
+                share: safeShare(vm.totalSyncRevenue, of: vm.totalRevenue),
                 color: Brand.amber,
                 icon: "film.fill"
             )
             categoryCard(
                 title: "Live Performance",
                 amount: vm.totalLiveRevenue,
-                share: vm.totalRevenue > 0 ? vm.totalLiveRevenue / vm.totalRevenue : 0,
+                share: safeShare(vm.totalLiveRevenue, of: vm.totalRevenue),
                 color: Brand.emerald,
                 icon: "mic.fill"
             )
@@ -211,15 +222,23 @@ struct RevenueAnalyticsView: View {
                     Text(title)
                         .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                 }
-                // Share bar
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Brand.border)
-                        Capsule().fill(color)
-                            .frame(width: geo.size.width * CGFloat(share))
+                // ── Share progress bar ──────────────────────────────────────
+                // Canvas avoids GeometryReader's zero-width first-pass NaN issue.
+                // The Canvas rect is always valid (even if small), so no NaN.
+                Canvas { ctx, size in
+                    // Background track
+                    let trackPath = Path(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+                    ctx.fill(trackPath, with: .color(Brand.border))
+
+                    // Filled portion — clamp share to [0,1] for safety
+                    let safeFill = min(max(share, 0), 1)
+                    let fillWidth = size.width * safeFill
+                    if fillWidth > 0 {
+                        let fillPath = Path(CGRect(x: 0, y: 0, width: fillWidth, height: size.height))
+                        ctx.fill(fillPath, with: .color(color))
                     }
-                    .frame(height: 4)
                 }
+                .clipShape(Capsule())
                 .frame(height: 4)
             }
         }

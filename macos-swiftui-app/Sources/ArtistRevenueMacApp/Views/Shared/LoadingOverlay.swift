@@ -1,10 +1,16 @@
 // LoadingOverlay.swift
 // Amplify Core — Liquid Glass loading state (macOS 26)
+//
+// Fix (2026-04): Removed liquidGlass(in: Rectangle()) applied to the full-screen
+// backdrop. A zero/indeterminate-sized rectangle passed to glassEffect/NSVisualEffectView
+// produced "CGPathCloseSubpath: no current point" and NaN CoreGraphics errors at launch.
+// The backdrop now uses a plain .ultraThinMaterial fill which is safe at any size.
 
 import SwiftUI
 
 /// Full-coverage loading overlay with a Liquid Glass spinner pill.
-/// The pill uses `.glassEffect(.regular)` — no custom material/stroke needed.
+/// The centre pill uses `.liquidGlass` on a sized rounded rectangle — safe.
+/// The backing scrim uses plain `.ultraThinMaterial` — avoids NaN at launch.
 public struct LoadingOverlay: View {
 
     private let message: String
@@ -18,17 +24,20 @@ public struct LoadingOverlay: View {
 
     public var body: some View {
         ZStack {
-            // Backdrop using system material — fine for full-coverage overlay
+            // ── Scrim ───────────────────────────────────────────────────────
+            // Do NOT use liquidGlass(in: Rectangle()) here. A full-screen
+            // rectangle without a fixed frame size causes CoreGraphics NaN
+            // errors on first layout pass. Plain material is safe and correct.
             Rectangle()
-                .liquidGlass(in: Rectangle())
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
 
-            // Glass spinner pill
+            // ── Spinner pill ─────────────────────────────────────────────────
             VStack(spacing: 20) {
                 // Spinner ring
                 ZStack {
                     Circle()
-                        .stroke(Color.secondary.opacity(0.2), lineWidth: 2.5)
+                        .stroke(Color.secondary.opacity(0.18), lineWidth: 2.5)
                         .frame(width: 48, height: 48)
 
                     Circle()
@@ -52,12 +61,12 @@ public struct LoadingOverlay: View {
             }
             .padding(.horizontal, 36)
             .padding(.vertical, 30)
-            // ✨ True Liquid Glass — no manual material needed
+            // ✨ Liquid Glass on a fixed-size pill is safe — shape has concrete bounds
             .liquidGlass(
                 in: RoundedRectangle(cornerRadius: 28, style: .continuous)
             )
-            .scaleEffect(appeared ? 1 : 0.88)
             .opacity(appeared ? 1 : 0)
+            .scaleEffect(appeared ? 1 : 0.90)
         }
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.72)) {
