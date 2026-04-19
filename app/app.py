@@ -71,6 +71,7 @@ with c1:
         GROUP BY thang ORDER BY thang
     """)
     if df is not None and not df.empty:
+<<<<<<< HEAD
         fig = px.line(
             df,
             x="thang",
@@ -78,6 +79,10 @@ with c1:
             markers=True,
             labels={"thang": "Thang", "doanh_thu": "Doanh thu (VND)"},
         )
+=======
+        fig = px.line(df, x="thang", y="doanh_thu", markers=True,
+                      labels={"thang": "Thang", "doanh_thu": "Doanh thu (VND)"})
+>>>>>>> 907fd51d116dd95096b96663befe4c506cb892f3
         fig.update_layout(height=350)
         st.plotly_chart(fig, use_container_width=True)
         st.caption(f"⏱️ {ms}ms")
@@ -98,6 +103,7 @@ with c2:
         ORDER BY doanh_thu DESC LIMIT 5
     """)
     if df is not None and not df.empty:
+<<<<<<< HEAD
         fig = px.bar(
             df,
             x="nghe_si",
@@ -106,6 +112,11 @@ with c2:
             labels={"nghe_si": "Nghe si", "doanh_thu": "Doanh thu (VND)"},
             color_discrete_sequence=["#1E2761"],
         )
+=======
+        fig = px.bar(df, x="nghe_si", y="doanh_thu", text_auto=True,
+                     labels={"nghe_si": "Nghe si", "doanh_thu": "Doanh thu (VND)"},
+                     color_discrete_sequence=["#1E2761"])
+>>>>>>> 907fd51d116dd95096b96663befe4c506cb892f3
         fig.update_layout(height=350)
         st.plotly_chart(fig, use_container_width=True)
         st.caption(f"⏱️ {ms}ms")
