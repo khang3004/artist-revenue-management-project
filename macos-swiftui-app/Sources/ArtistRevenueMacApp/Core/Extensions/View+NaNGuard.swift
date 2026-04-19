@@ -27,6 +27,9 @@ public extension Double {
 
     /// Returns `fallback` if NaN/infinite; otherwise self.
     func orZero() -> Double { nanSafe }
+
+    /// Returns a finite non-negative value, falling back to `0` for NaN/infinity.
+    var nonNegativeFinite: Double { max(0, nanSafe) }
 }
 
 // MARK: - Safe share ratio

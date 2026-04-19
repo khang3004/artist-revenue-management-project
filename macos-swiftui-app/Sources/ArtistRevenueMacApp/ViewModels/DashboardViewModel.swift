@@ -55,7 +55,7 @@ final class DashboardViewModel {
 
     /// Aggregate total revenue across all categories in the loaded 12-month window.
     var totalRevenue: Double {
-        chartSeries.reduce(0.0) { accumulated, point in accumulated + point.totalAmount }
+        chartSeries.reduce(0.0) { accumulated, point in accumulated + point.totalAmount.nanSafe }.nonNegativeFinite
     }
 
     /// The leading top-earner's stage name — displayed in a KPI badge.
@@ -65,32 +65,31 @@ final class DashboardViewModel {
 
     /// Total revenue formatted as a compact USD currency string (no cents).
     var formattedTotalRevenue: String {
-        let formatter: NumberFormatter = NumberFormatter()
-        formatter.numberStyle           = .currency
-        formatter.currencyCode          = "USD"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: totalRevenue)) ?? "$0"
+        AppMoney.format(totalRevenue, maxFractionDigits: 0)
     }
 
     /// Gross streaming revenue across all loaded periods.
     var totalStreamingRevenue: Double {
         chartSeries
             .filter { $0.revenueType == .STREAMING }
-            .reduce(0.0) { $0 + $1.totalAmount }
+            .reduce(0.0) { $0 + $1.totalAmount.nanSafe }
+            .nonNegativeFinite
     }
 
     /// Gross sync revenue across all loaded periods.
     var totalSyncRevenue: Double {
         chartSeries
             .filter { $0.revenueType == .SYNC }
-            .reduce(0.0) { $0 + $1.totalAmount }
+            .reduce(0.0) { $0 + $1.totalAmount.nanSafe }
+            .nonNegativeFinite
     }
 
     /// Gross live revenue across all loaded periods.
     var totalLiveRevenue: Double {
         chartSeries
             .filter { $0.revenueType == .LIVE }
-            .reduce(0.0) { $0 + $1.totalAmount }
+            .reduce(0.0) { $0 + $1.totalAmount.nanSafe }
+            .nonNegativeFinite
     }
 
     // MARK: - Private Dependencies
@@ -116,21 +115,40 @@ final class DashboardViewModel {
     /// total latency to approximately the duration of the slowest individual query.
     ///
     /// Re-entrancy guard: ignores calls made while a fetch is already in progress.
-    func loadAll() async {
+    func loadAll(months: Int? = 12) async {
         guard !isLoading else { return }
         isLoading    = true
         errorMessage = nil
 
         do {
-            async let seriesTask: [RevenuePoint]    = revenueRepository.fetchMonthlyRollup(months: 12)
-            async let pivotTask: [RevenuePivotRow]  = revenueRepository.fetchPivot()
+            async let seriesTask: [RevenuePoint]    = revenueRepository.fetchMonthlyRollup(months: months)
+            async let pivotTask: [RevenuePivotRow]  = revenueRepository.fetchPivot(months: months)
             async let earnersTask: [TopEarner]      = revenueRepository.fetchTopEarners(limit: 10)
 
             let (series, pivot, earners) = try await (seriesTask, pivotTask, earnersTask)
 
-            self.chartSeries = series
-            self.pivotData   = pivot
-            self.topEarners  = earners
+            self.chartSeries = series.map {
+                RevenuePoint(
+                    month: $0.month,
+                    totalAmount: $0.totalAmount.nonNegativeFinite,
+                    revenueType: $0.revenueType
+                )
+            }
+            self.pivotData = pivot.map {
+                RevenuePivotRow(
+                    month: $0.month,
+                    streamingAmount: $0.streamingAmount.nonNegativeFinite,
+                    syncAmount: $0.syncAmount.nonNegativeFinite,
+                    liveAmount: $0.liveAmount.nonNegativeFinite
+                )
+            }
+            self.topEarners = earners.map {
+                TopEarner(
+                    id: $0.id,
+                    stageName: $0.stageName,
+                    totalRevenue: $0.totalRevenue.nonNegativeFinite
+                )
+            }
             
             self.calculateAIForecast()
         } catch {
@@ -174,7 +192,7 @@ final class DashboardViewModel {
         
         // Predict next month (x = n + 1)
         let rawPrediction = slope * (n + 1) + intercept
-        self.forecastedRevenue = max(0, rawPrediction) // Floor at 0
+        self.forecastedRevenue = max(0, rawPrediction.nanSafe) // Floor at 0
         
         // Calculate basic variance (Root Mean Square Error bounds)
         var sumSquaredResiduals = 0.0
@@ -183,17 +201,17 @@ final class DashboardViewModel {
             let residual = yValues[i] - predictedY
             sumSquaredResiduals += (residual * residual)
         }
-        let rmse = sqrt(sumSquaredResiduals / n)
-        self.forecastedVariance = rmse
+        let rmse = sqrt((sumSquaredResiduals / n).nanSafe)
+        self.forecastedVariance = rmse.nanSafe
     }
 
     /// Clears all cached data and re-fetches from scratch.
     ///
     /// Useful for manual pull-to-refresh or after a fatal error dismissal.
-    func refresh() async {
+    func refresh(months: Int? = 12) async {
         chartSeries = []
         pivotData   = []
         topEarners  = []
-        await loadAll()
+        await loadAll(months: months)
     }
 }

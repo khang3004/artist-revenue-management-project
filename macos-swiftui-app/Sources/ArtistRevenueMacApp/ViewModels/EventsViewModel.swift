@@ -18,7 +18,7 @@ final class EventsViewModel {
     // MARK: - Computed
     var filteredVenueRows: [VenueEventRow] { venueRows.filter { !$0.isRollupRow } }
 
-    var totalLiveRevenue: Double { filteredVenueRows.reduce(0) { $0 + $1.liveRevenue } }
+    var totalLiveRevenue: Double { filteredVenueRows.reduce(0) { $0 + $1.liveRevenue.nanSafe }.nonNegativeFinite }
 
     var totalTicketsSold: Int { filteredVenueRows.reduce(0) { $0 + $1.ticketsSold } }
 
@@ -27,16 +27,14 @@ final class EventsViewModel {
     }
 
     var formattedTotalRevenue: String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: totalLiveRevenue)) ?? "$0"
+        AppMoney.format(totalLiveRevenue, maxFractionDigits: 0)
     }
 
     // Revenue per venue for bar chart: distinct venues summed
     var revenueByVenue: [(venue: String, revenue: Double)] {
         var dict: [String: Double] = [:]
         for row in filteredVenueRows {
-            dict[row.venueName, default: 0] += row.liveRevenue
+            dict[row.venueName, default: 0] += row.liveRevenue.nanSafe
         }
         return dict.map { (venue: $0.key, revenue: $0.value) }
             .sorted { $0.revenue > $1.revenue }
@@ -57,7 +55,17 @@ final class EventsViewModel {
             async let venueTask   = repo.fetchVenueAnalytics(year: selectedYear)
             async let upcomingTask = repo.fetchUpcomingEvents()
             let (v, u) = try await (venueTask, upcomingTask)
-            venueRows      = v
+            venueRows = v.map {
+                VenueEventRow(
+                    venueName: $0.venueName,
+                    artistName: $0.artistName,
+                    eventCount: $0.eventCount,
+                    ticketsSold: $0.ticketsSold,
+                    liveRevenue: $0.liveRevenue.nonNegativeFinite,
+                    avgTicketsPerEvent: $0.avgTicketsPerEvent.nanSafe,
+                    venueRank: $0.venueRank
+                )
+            }
             upcomingEvents = u
         } catch {
             errorMessage = error.localizedDescription

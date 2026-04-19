@@ -15,6 +15,22 @@ struct RevenueRollUpView: View {
     @State private var chartAnimated = false
     @State private var selectedPeriod: RevenuePeriod = .year
 
+    private var safeChartSeries: [RevenuePoint] {
+        vm.chartSeries.filter { $0.totalAmount.isFinite && !$0.totalAmount.isNaN }
+    }
+
+    private var donutSegments: [(label: String, value: Double, color: Color)] {
+        [
+            ("Streaming", vm.totalStreamingRevenue.nonNegativeFinite, Brand.teal),
+            ("Sync", vm.totalSyncRevenue.nonNegativeFinite, Brand.amber),
+            ("Live", vm.totalLiveRevenue.nonNegativeFinite, Brand.emerald)
+        ]
+    }
+
+    private var hasDonutData: Bool {
+        donutSegments.contains { $0.value > 0 }
+    }
+
     enum RevenuePeriod: String, CaseIterable {
         case month30 = "30 Days"
         case month90 = "90 Days"
@@ -46,7 +62,7 @@ struct RevenueRollUpView: View {
         .scrollEdgeEffectStyle(.soft, for: .top)
         .scrollEdgeEffectStyle(.soft, for: .bottom)
         .background(.clear)
-        .task { await vm.loadAll() }
+        .task { await vm.loadAll(months: selectedPeriod.months) }
         .overlay {
             if vm.isLoading { LoadingOverlay(message: "Synthesising Revenue Intelligence…") }
         }
@@ -55,7 +71,7 @@ struct RevenueRollUpView: View {
             set: { if !$0 { vm.errorMessage = nil } }
         )) {
             Button("Dismiss", role: .cancel) { vm.errorMessage = nil }
-            Button("Retry") { Task { await vm.refresh() } }
+            Button("Retry") { Task { await vm.refresh(months: selectedPeriod.months) } }
         } message: {
             Text(vm.errorMessage ?? "An unknown error occurred.")
         }
@@ -80,7 +96,7 @@ struct RevenueRollUpView: View {
                     ForEach(RevenuePeriod.allCases, id: \.self) { period in
                         Button(period.rawValue) {
                             selectedPeriod = period
-                            Task { await vm.loadAll() }
+                            Task { await vm.loadAll(months: period.months) }
                         }
                         .font(.system(size: 11, weight: selectedPeriod == period ? .bold : .medium))
                         .foregroundStyle(selectedPeriod == period ? Brand.primary : .secondary)
@@ -93,7 +109,7 @@ struct RevenueRollUpView: View {
             }
 
             Button {
-                Task { await vm.refresh() }
+                Task { await vm.refresh(months: selectedPeriod.months) }
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
@@ -135,31 +151,17 @@ struct RevenueRollUpView: View {
             HStack(spacing: 32) {
                 // Donut
                 VStack(spacing: 8) {
-                    if !vm.chartSeries.isEmpty {
+                    if hasDonutData {
                         Chart {
-                            SectorMark(
-                                angle: .value("Streaming", vm.totalStreamingRevenue),
-                                innerRadius: .ratio(0.62),
-                                angularInset: 2
-                            )
-                            .foregroundStyle(Brand.teal)
-                            .cornerRadius(4)
-
-                            SectorMark(
-                                angle: .value("Sync", vm.totalSyncRevenue),
-                                innerRadius: .ratio(0.62),
-                                angularInset: 2
-                            )
-                            .foregroundStyle(Brand.amber)
-                            .cornerRadius(4)
-
-                            SectorMark(
-                                angle: .value("Live", vm.totalLiveRevenue),
-                                innerRadius: .ratio(0.62),
-                                angularInset: 2
-                            )
-                            .foregroundStyle(Brand.emerald)
-                            .cornerRadius(4)
+                            ForEach(donutSegments, id: \.label) { segment in
+                                SectorMark(
+                                    angle: .value(segment.label, segment.value),
+                                    innerRadius: .ratio(0.62),
+                                    angularInset: 2
+                                )
+                                .foregroundStyle(segment.color)
+                                .cornerRadius(4)
+                            }
                         }
                         .frame(width: 120, height: 120)
                         .overlay {
@@ -185,9 +187,9 @@ struct RevenueRollUpView: View {
                     Text("Revenue Mix")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
 
-                    donutLegendRow(label: "Streaming",       color: Brand.teal,    amount: vm.totalStreamingRevenue, total: vm.totalRevenue)
-                    donutLegendRow(label: "Sync & Licensing", color: Brand.amber,   amount: vm.totalSyncRevenue,       total: vm.totalRevenue)
-                    donutLegendRow(label: "Live Performance", color: Brand.emerald, amount: vm.totalLiveRevenue,       total: vm.totalRevenue)
+                    donutLegendRow(label: "Streaming",       color: Brand.teal,    amount: vm.totalStreamingRevenue.nonNegativeFinite, total: vm.totalRevenue.nonNegativeFinite)
+                    donutLegendRow(label: "Sync & Licensing", color: Brand.amber,   amount: vm.totalSyncRevenue.nonNegativeFinite,       total: vm.totalRevenue.nonNegativeFinite)
+                    donutLegendRow(label: "Live Performance", color: Brand.emerald, amount: vm.totalLiveRevenue.nonNegativeFinite,       total: vm.totalRevenue.nonNegativeFinite)
                 }
 
                 Spacer()
@@ -212,11 +214,13 @@ struct RevenueRollUpView: View {
             }
             // Canvas progress bar — NaN-safe
             Canvas { ctx, size in
-                let track = Path(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+                let width = size.width.nanSafe
+                let height = size.height.nanSafe
+                let track = Path(CGRect(x: 0, y: 0, width: width, height: height))
                 ctx.fill(track, with: .color(Brand.border))
-                let fillW = size.width * min(max(share, 0), 1)
+                let fillW = width * min(max(share, 0), 1)
                 if fillW > 0 {
-                    let fill = Path(CGRect(x: 0, y: 0, width: fillW, height: size.height))
+                    let fill = Path(CGRect(x: 0, y: 0, width: fillW.nanSafe, height: height))
                     ctx.fill(fill, with: .color(color))
                 }
             }
@@ -242,7 +246,7 @@ struct RevenueRollUpView: View {
                     legendStack
                 }
 
-                if vm.chartSeries.isEmpty && !vm.isLoading {
+                if safeChartSeries.isEmpty && !vm.isLoading {
                     ContentUnavailableView(
                         "No Revenue Data",
                         systemImage: "chart.line.downtrend.xyaxis",
@@ -277,20 +281,22 @@ struct RevenueRollUpView: View {
     }
 
     private var revenueLineChart: some View {
-        Chart(vm.chartSeries) { point in
+        Chart(safeChartSeries) { point in
+            let animatedAmount = chartAnimated ? point.totalAmount.nonNegativeFinite : 0
             LineMark(
                 x: .value("Month",   point.month,       unit: .month),
-                y: .value("Revenue", chartAnimated ? point.totalAmount : 0)
+                y: .value("Revenue", animatedAmount),
+                series: .value("Category", point.revenueType.rawValue)
             )
-            .foregroundStyle(colorFor(point.revenueType))
+            .foregroundStyle(by: .value("Category", point.revenueType.rawValue))
             .lineStyle(StrokeStyle(lineWidth: 2.5))
             .symbol(Circle().strokeBorder(lineWidth: 1.5))
             .symbolSize(30)
-            .interpolationMethod(.catmullRom)
 
             AreaMark(
                 x: .value("Month",   point.month,       unit: .month),
-                y: .value("Revenue", chartAnimated ? point.totalAmount : 0)
+                y: .value("Revenue", animatedAmount),
+                series: .value("Category", point.revenueType.rawValue)
             )
             .foregroundStyle(
                 LinearGradient(
@@ -298,12 +304,11 @@ struct RevenueRollUpView: View {
                     startPoint: .top, endPoint: .bottom
                 )
             )
-            .interpolationMethod(.catmullRom)
         }
         .chartForegroundStyleScale([
-            "Streaming": Brand.teal,
-            "Sync":      Brand.amber,
-            "Live":      Brand.emerald
+            RevenueType.STREAMING.rawValue: Brand.teal,
+            RevenueType.SYNC.rawValue:      Brand.amber,
+            RevenueType.LIVE.rawValue:      Brand.emerald
         ])
         .chartXAxis {
             AxisMarks(values: .stride(by: .month, count: 1)) { _ in
@@ -317,7 +322,7 @@ struct RevenueRollUpView: View {
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.4)).foregroundStyle(.separator)
                 AxisValueLabel {
                     if let d = value.as(Double.self) {
-                        Text(abbrev(d)).font(.system(size: 10)).foregroundStyle(.secondary)
+                        Text(abbrev(d.nanSafe)).font(.system(size: 10)).foregroundStyle(.secondary)
                     }
                 }
             }
@@ -328,7 +333,7 @@ struct RevenueRollUpView: View {
                 chartAnimated = true
             }
         }
-        .onChange(of: vm.chartSeries) { _, _ in
+        .onChange(of: safeChartSeries) { _, _ in
             chartAnimated = false
             withAnimation(.spring(response: 0.9, dampingFraction: 0.76).delay(0.1)) {
                 chartAnimated = true
@@ -360,7 +365,7 @@ struct RevenueRollUpView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.vertical, 16)
                 } else {
-                    let maxRevenue = vm.topEarners.first.map { $0.totalRevenue } ?? 1
+                    let maxRevenue = vm.topEarners.first.map { $0.totalRevenue.nonNegativeFinite } ?? 1
                     ForEach(Array(vm.topEarners.enumerated()), id: \.offset) { idx, earner in
                         earnerRow(rank: idx + 1, earner: earner, maxRevenue: maxRevenue)
                         if idx < vm.topEarners.count - 1 {
@@ -411,13 +416,15 @@ struct RevenueRollUpView: View {
             }
 
             // Mini share bar
-            let share = safeShare(earner.totalRevenue, of: maxRevenue)
+            let share = safeShare(earner.totalRevenue.nonNegativeFinite, of: maxRevenue.nonNegativeFinite)
             Canvas { ctx, size in
-                let bg = Path(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+                let width = size.width.nanSafe
+                let height = size.height.nanSafe
+                let bg = Path(CGRect(x: 0, y: 0, width: width, height: height))
                 ctx.fill(bg, with: .color(Brand.border.opacity(0.5)))
-                let fw = size.width * share
+                let fw = width * share
                 if fw > 0 {
-                    let fill = Path(CGRect(x: 0, y: 0, width: fw, height: size.height))
+                    let fill = Path(CGRect(x: 0, y: 0, width: fw.nanSafe, height: height))
                     ctx.fill(fill, with: .color(Brand.primary.opacity(0.5)))
                 }
             }
@@ -439,16 +446,10 @@ struct RevenueRollUpView: View {
     }
 
     private func formatAmt(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "$0"
+        AppMoney.format(v, maxFractionDigits: 0)
     }
 
     private func abbrev(_ v: Double) -> String {
-        switch v {
-        case 1_000_000...: String(format: "$%.1fM", v / 1_000_000)
-        case 1_000...:     String(format: "$%.0fK", v / 1_000)
-        default:           String(format: "$%.0f", v)
-        }
+        AppMoney.formatCompact(v)
     }
 }

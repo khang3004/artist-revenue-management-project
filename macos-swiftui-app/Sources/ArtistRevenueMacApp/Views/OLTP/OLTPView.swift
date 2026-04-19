@@ -439,7 +439,7 @@ private struct SP10RecordRevenueTab: View {
     @State private var selectedTrack:  Int?    = nil
     @State private var amount:         Double  = 50_000
     @State private var revenueType:    String  = "streaming"
-    @State private var currency:       String  = "USD"
+    @State private var currency:       String  = "VND"
     // Streaming
     @State private var streamCount:    Int     = 1_000_000
     @State private var perStreamRate:  Double  = 0.0034
@@ -452,7 +452,7 @@ private struct SP10RecordRevenueTab: View {
     @State private var ticketSold:     Int     = 3000
 
     let platforms = ["Spotify", "Apple Music", "YouTube Music", "Tidal", "SoundCloud"]
-    let currencies = ["USD", "EUR", "VND"]
+    let currencies = ["VND", "USD", "EUR"]
 
     var body: some View {
         GlassCard(cornerRadius: 20, padding: 24) {
@@ -812,9 +812,7 @@ private struct SP11WithdrawalTab: View {
     }
 
     private func formatCurrency(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "$0"
+        AppMoney.format(v, maxFractionDigits: 0)
     }
 }
 

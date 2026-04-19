@@ -13,12 +13,16 @@ struct EventsView: View {
 
     private let availableYears = [2023, 2024, 2025, 2026]
 
+    private var safeRevenueByVenue: [(venue: String, revenue: Double)] {
+        vm.revenueByVenue.filter { $0.revenue.isFinite && !$0.revenue.isNaN }
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 24) {
                 headerRow
                 kpiRow
-                if !vm.revenueByVenue.isEmpty { venueChartCard }
+                if !safeRevenueByVenue.isEmpty { venueChartCard }
                 upcomingCard
                 venueTableCard
             }
@@ -88,9 +92,9 @@ struct EventsView: View {
                     Spacer()
                 }
 
-                Chart(vm.revenueByVenue, id: \.venue) { item in
+                Chart(safeRevenueByVenue, id: \.venue) { item in
                     BarMark(
-                        x: .value("Revenue", item.revenue),
+                        x: .value("Revenue", item.revenue.nonNegativeFinite),
                         y: .value("Venue",   item.venue)
                     )
                     .foregroundStyle(
@@ -112,7 +116,7 @@ struct EventsView: View {
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Brand.border)
                         AxisValueLabel {
                             if let d = value.as(Double.self) {
-                                Text(abbreviate(d)).font(.system(size: 10)).foregroundStyle(.secondary)
+                                Text(abbreviate(d.nanSafe)).font(.system(size: 10)).foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -122,7 +126,7 @@ struct EventsView: View {
                         AxisValueLabel().font(.system(size: 11))
                     }
                 }
-                .frame(height: CGFloat(max(200, vm.revenueByVenue.count * 44)))
+                .frame(height: CGFloat(max(200, safeRevenueByVenue.count * 44)))
             }
         }
     }
@@ -251,10 +255,11 @@ struct EventsView: View {
     }
 
     private func abbreviate(_ v: Double) -> String {
-        switch v {
-        case 1_000_000...: return String(format: "$%.1fM", v / 1_000_000)
-        case 1_000...:     return String(format: "$%.0fK", v / 1_000)
-        default:           return String(format: "$%.0f", v)
+        let safeValue = v.nanSafe
+        switch safeValue {
+        case 1_000_000...: return String(format: "$%.1fM", safeValue / 1_000_000)
+        case 1_000...:     return String(format: "$%.0fK", safeValue / 1_000)
+        default:           return String(format: "$%.0f", safeValue)
         }
     }
 }

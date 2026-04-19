@@ -21,6 +21,14 @@ struct RevenueAnalyticsView: View {
     @State private var chartAnimated = false
     @State private var selectedDate: Date?
 
+    private var safePivotData: [RevenuePivotRow] {
+        vm.pivotData.filter {
+            $0.streamingAmount.isFinite && !$0.streamingAmount.isNaN &&
+            $0.syncAmount.isFinite && !$0.syncAmount.isNaN &&
+            $0.liveAmount.isFinite && !$0.liveAmount.isNaN
+        }
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 24) {
@@ -82,27 +90,30 @@ struct RevenueAnalyticsView: View {
                     }
                 }
 
-                if vm.pivotData.isEmpty && !vm.isLoading {
+                if safePivotData.isEmpty && !vm.isLoading {
                     emptyState("No pivot data available.")
                 } else {
-                    Chart(vm.pivotData) { pivot in
+                    Chart(safePivotData) { pivot in
+                        let streamingAmount = chartAnimated ? pivot.streamingAmount.nonNegativeFinite : 0
+                        let syncAmount = chartAnimated ? pivot.syncAmount.nonNegativeFinite : 0
+                        let liveAmount = chartAnimated ? pivot.liveAmount.nonNegativeFinite : 0
                         BarMark(
                             x: .value("Month",     pivot.month, unit: .month),
-                            y: .value("Streaming", chartAnimated ? pivot.streamingAmount : 0)
+                            y: .value("Streaming", streamingAmount)
                         )
                         .foregroundStyle(Brand.teal).cornerRadius(3)
                         .opacity(selectedDate == nil || Calendar.current.isDate(pivot.month, equalTo: selectedDate!, toGranularity: .month) ? 1.0 : 0.4)
 
                         BarMark(
                             x: .value("Month", pivot.month, unit: .month),
-                            y: .value("Sync",  chartAnimated ? pivot.syncAmount : 0)
+                            y: .value("Sync",  syncAmount)
                         )
                         .foregroundStyle(Brand.amber).cornerRadius(3)
                         .opacity(selectedDate == nil || Calendar.current.isDate(pivot.month, equalTo: selectedDate!, toGranularity: .month) ? 1.0 : 0.4)
 
                         BarMark(
                             x: .value("Month", pivot.month, unit: .month),
-                            y: .value("Live",  chartAnimated ? pivot.liveAmount : 0)
+                            y: .value("Live",  liveAmount)
                         )
                         .foregroundStyle(Brand.emerald).cornerRadius(3)
                         .opacity(selectedDate == nil || Calendar.current.isDate(pivot.month, equalTo: selectedDate!, toGranularity: .month) ? 1.0 : 0.4)
@@ -120,7 +131,7 @@ struct RevenueAnalyticsView: View {
                             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Brand.border)
                             AxisValueLabel {
                                 if let d = v.as(Double.self) {
-                                    Text(abbreviate(d)).font(.system(size: 10)).foregroundStyle(.secondary)
+                                    Text(abbreviate(d.nanSafe)).font(.system(size: 10)).foregroundStyle(.secondary)
                                 }
                             }
                         }
@@ -131,7 +142,7 @@ struct RevenueAnalyticsView: View {
                                let xPosition = proxy.position(forX: selectedDate) {
                                 // Clamp tooltip x so it never escapes the chart bounds
                                 let safeX = xPosition.nanSafe.clamped(lo: 0, hi: max(0, geo.size.width))
-                                if let pivot = vm.pivotData.first(where: {
+                                if let pivot = safePivotData.first(where: {
                                     Calendar.current.isDate($0.month, equalTo: selectedDate, toGranularity: .month)
                                 }) {
                                     VStack(alignment: .leading, spacing: 4) {
@@ -163,7 +174,7 @@ struct RevenueAnalyticsView: View {
                             chartAnimated = true
                         }
                     }
-                    .onChange(of: vm.pivotData) { _, _ in
+                    .onChange(of: safePivotData) { _, _ in
                         chartAnimated = false
                         withAnimation(.spring(response: 0.8, dampingFraction: 0.72).delay(0.1)) {
                             chartAnimated = true
@@ -180,22 +191,22 @@ struct RevenueAnalyticsView: View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3), spacing: 16) {
             categoryCard(
                 title: "Streaming",
-                amount: vm.totalStreamingRevenue,
-                share: safeShare(vm.totalStreamingRevenue, of: vm.totalRevenue),
+                amount: vm.totalStreamingRevenue.nonNegativeFinite,
+                share: safeShare(vm.totalStreamingRevenue.nonNegativeFinite, of: vm.totalRevenue.nonNegativeFinite),
                 color: Brand.teal,
                 icon: "waveform"
             )
             categoryCard(
                 title: "Sync & Licensing",
-                amount: vm.totalSyncRevenue,
-                share: safeShare(vm.totalSyncRevenue, of: vm.totalRevenue),
+                amount: vm.totalSyncRevenue.nonNegativeFinite,
+                share: safeShare(vm.totalSyncRevenue.nonNegativeFinite, of: vm.totalRevenue.nonNegativeFinite),
                 color: Brand.amber,
                 icon: "film.fill"
             )
             categoryCard(
                 title: "Live Performance",
-                amount: vm.totalLiveRevenue,
-                share: safeShare(vm.totalLiveRevenue, of: vm.totalRevenue),
+                amount: vm.totalLiveRevenue.nonNegativeFinite,
+                share: safeShare(vm.totalLiveRevenue.nonNegativeFinite, of: vm.totalRevenue.nonNegativeFinite),
                 color: Brand.emerald,
                 icon: "mic.fill"
             )
@@ -226,15 +237,17 @@ struct RevenueAnalyticsView: View {
                 // Canvas avoids GeometryReader's zero-width first-pass NaN issue.
                 // The Canvas rect is always valid (even if small), so no NaN.
                 Canvas { ctx, size in
+                    let width = size.width.nanSafe
+                    let height = size.height.nanSafe
                     // Background track
-                    let trackPath = Path(CGRect(x: 0, y: 0, width: size.width, height: size.height))
+                    let trackPath = Path(CGRect(x: 0, y: 0, width: width, height: height))
                     ctx.fill(trackPath, with: .color(Brand.border))
 
                     // Filled portion — clamp share to [0,1] for safety
                     let safeFill = min(max(share, 0), 1)
-                    let fillWidth = size.width * safeFill
+                    let fillWidth = width * safeFill
                     if fillWidth > 0 {
-                        let fillPath = Path(CGRect(x: 0, y: 0, width: fillWidth, height: size.height))
+                        let fillPath = Path(CGRect(x: 0, y: 0, width: fillWidth.nanSafe, height: height))
                         ctx.fill(fillPath, with: .color(color))
                     }
                 }
@@ -267,10 +280,10 @@ struct RevenueAnalyticsView: View {
 
                 Divider().overlay(Brand.border.opacity(0.5))
 
-                if vm.pivotData.isEmpty && !vm.isLoading {
+                if safePivotData.isEmpty && !vm.isLoading {
                     emptyState("No monthly data available.")
                 } else {
-                    ForEach(vm.pivotData) { pivot in
+                    ForEach(safePivotData) { pivot in
                         HStack {
                             Text(pivot.month.formatted(.dateTime.year().month(.wide)))
                                 .font(.system(size: 12, weight: .medium))
@@ -294,7 +307,7 @@ struct RevenueAnalyticsView: View {
                     }
 
                     // Grand total row
-                    if !vm.pivotData.isEmpty {
+                    if !safePivotData.isEmpty {
                         Divider().overlay(Brand.border)
                         HStack {
                             Text("TOTAL").font(.system(size: 12, weight: .bold))
@@ -337,16 +350,10 @@ struct RevenueAnalyticsView: View {
     }
 
     private func formatCurrency(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "$0"
+        AppMoney.format(v, maxFractionDigits: 0)
     }
 
     private func abbreviate(_ v: Double) -> String {
-        switch v {
-        case 1_000_000...: return String(format: "$%.1fM", v / 1_000_000)
-        case 1_000...:     return String(format: "$%.0fK", v / 1_000)
-        default:           return String(format: "$%.0f", v)
-        }
+        AppMoney.formatCompact(v)
     }
 }

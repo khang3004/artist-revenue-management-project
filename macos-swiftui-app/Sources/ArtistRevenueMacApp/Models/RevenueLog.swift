@@ -214,13 +214,9 @@ public struct TopEarner: Identifiable, Codable, Hashable, Sendable {
 
     // MARK: - Computed Properties
 
-    /// Returns the total revenue formatted as a USD currency string.
+    /// Returns the total revenue formatted as a VNĐ currency string.
     public var formattedRevenue: String {
-        let formatter: NumberFormatter = NumberFormatter()
-        formatter.numberStyle   = .currency
-        formatter.currencyCode  = "USD"
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: totalRevenue)) ?? "$0"
+        AppMoney.format(totalRevenue, maxFractionDigits: 0)
     }
 
     // MARK: - Memberwise Initialiser

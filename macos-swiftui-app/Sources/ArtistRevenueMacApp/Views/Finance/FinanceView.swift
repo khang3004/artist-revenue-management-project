@@ -14,6 +14,10 @@ struct FinanceView: View {
     private let availableYears = [2023, 2024, 2025, 2026]
     private let topNOptions    = [3, 5, 10]
 
+    private var safeTopTracksForChart: [TopTrackRow] {
+        vm.topTracksForChart.filter { $0.totalRevenue.isFinite && !$0.totalRevenue.isNaN }
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 24) {
@@ -182,14 +186,14 @@ struct FinanceView: View {
                     Spacer()
                 }
 
-                if vm.topTracksForChart.isEmpty && !vm.isLoading {
+                if safeTopTracksForChart.isEmpty && !vm.isLoading {
                     Text("No track data available for \(vm.selectedYear).")
                         .font(.system(size: 13)).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 24)
                 } else {
-                    Chart(vm.topTracksForChart) { row in
+                    Chart(safeTopTracksForChart) { row in
                         BarMark(
-                            x: .value("Revenue", row.totalRevenue),
+                            x: .value("Revenue", row.totalRevenue.nonNegativeFinite),
                             y: .value("Track", "\(row.artistName) · \(row.trackTitle)")
                         )
                         .foregroundStyle(LinearGradient(
@@ -208,13 +212,13 @@ struct FinanceView: View {
                             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Brand.border)
                             AxisValueLabel {
                                 if let d = v.as(Double.self) {
-                                    Text(abbreviate(d)).font(.system(size: 10)).foregroundStyle(.secondary)
+                                    Text(abbreviate(d.nanSafe)).font(.system(size: 10)).foregroundStyle(.secondary)
                                 }
                             }
                         }
                     }
                     .chartYAxis { AxisMarks { _ in AxisValueLabel().font(.system(size: 10)) } }
-                    .frame(height: CGFloat(max(200, vm.topTracksForChart.count * 36)))
+                    .frame(height: CGFloat(max(200, safeTopTracksForChart.count * 36)))
                 }
             }
         }
@@ -330,15 +334,9 @@ struct FinanceView: View {
 
     // MARK: - Helpers
     private func formatCurrency(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "$0"
+        AppMoney.format(v, maxFractionDigits: 0)
     }
     private func abbreviate(_ v: Double) -> String {
-        switch v {
-        case 1_000_000...: return String(format: "$%.1fM", v / 1_000_000)
-        case 1_000...:     return String(format: "$%.0fK", v / 1_000)
-        default:           return String(format: "$%.0f", v)
-        }
+        AppMoney.formatCompact(v)
     }
 }

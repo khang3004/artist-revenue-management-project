@@ -31,21 +31,16 @@ public struct ArtistWallet: Identifiable, Codable, Hashable, Sendable {
     /// The artist's public stage name, joined from `artists.stage_name` for display.
     public let stageName: String
 
-    /// The current payable balance in the base currency (USD).
+    /// The current payable balance in the app's base currency (VNĐ).
     /// Must be non-negative (enforced by CHECK constraint and trigger).
     /// Decoded via `balance::float8`.
     public let balance: Double
 
     // MARK: - Computed Properties
 
-    /// Returns the current balance formatted as a USD currency string with two decimal places.
+    /// Returns the current balance formatted as a VNĐ currency string.
     public var formattedBalance: String {
-        let formatter: NumberFormatter = NumberFormatter()
-        formatter.numberStyle          = .currency
-        formatter.currencyCode         = "USD"
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: balance)) ?? "$\(balance)"
+        AppMoney.format(balance, maxFractionDigits: 0)
     }
 
     /// Returns a relative description of the wallet health category.

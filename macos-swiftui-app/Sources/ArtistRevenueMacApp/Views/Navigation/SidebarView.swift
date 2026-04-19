@@ -136,10 +136,19 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Amplify")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .minimumScaleFactor(0.85)
+                    .allowsTightening(true)
                 Text("Core")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Brand.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .minimumScaleFactor(0.85)
+                    .allowsTightening(true)
             }
+            .layoutPriority(1)
 
             Spacer()
 

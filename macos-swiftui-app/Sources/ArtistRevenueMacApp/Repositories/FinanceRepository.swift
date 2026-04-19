@@ -24,9 +24,7 @@ public struct ContractPayoutRow: Identifiable, Sendable {
     public let actualPayout: Double
 
     public var formattedPayout: String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.minimumFractionDigits = 2; f.maximumFractionDigits = 2
-        return f.string(from: NSNumber(value: actualPayout)) ?? "$0.00"
+        AppMoney.format(actualPayout, maxFractionDigits: 0)
     }
     public var formattedShare: String { String(format: "%.1f%%", sharePct * 100) }
 }
@@ -45,9 +43,7 @@ public struct TopTrackRow: Identifiable, Sendable {
     public let rank: Int
 
     public var formattedRevenue: String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: totalRevenue)) ?? "$0"
+        AppMoney.format(totalRevenue, maxFractionDigits: 0)
     }
     public var formattedPlayCount: String {
         let f = NumberFormatter(); f.numberStyle = .decimal
@@ -73,14 +69,10 @@ public struct WalletAuditRow: Identifiable, Sendable {
     public var isHealthy: Bool { auditStatus == "OK" }
 
     public var formattedBalance: String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.minimumFractionDigits = 2
-        return f.string(from: NSNumber(value: walletBalance)) ?? "$0"
+        AppMoney.format(walletBalance, maxFractionDigits: 0)
     }
     public var formattedDiscrepancy: String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.minimumFractionDigits = 2
-        return f.string(from: NSNumber(value: discrepancy)) ?? "$0"
+        AppMoney.format(discrepancy, maxFractionDigits: 0)
     }
 }
 

@@ -31,9 +31,7 @@ public struct VenueEventRow: Identifiable, Sendable {
     }
 
     public var formattedRevenue: String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "USD"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: liveRevenue)) ?? "$0"
+        AppMoney.format(liveRevenue, maxFractionDigits: 0)
     }
 }
 

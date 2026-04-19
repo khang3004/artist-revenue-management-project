@@ -79,6 +79,8 @@ struct ContentView: View {
                 .liquidGlassExtensionEffect()
         }
         .navigationSplitViewStyle(.balanced)
+        // Prevent the sidebar from collapsing so far that the header/title wraps per-character.
+        .navigationSplitViewColumnWidth(min: 260, ideal: 290, max: 360)
         // Rich gradient backdrop — glass refracts colour from whatever is behind it.
         // This creates the "floating on a coloured canvas" Liquid Glass look.
         .background(meshBackground)
@@ -97,10 +99,10 @@ struct ContentView: View {
             case .events:    EventsView()
             case .finance:   FinanceView()
             case .labels:    LabelDirectoryView(repo: artistRepo)
-            case .albums:    UniversalManagementView(title: "Albums Catalog", subtitle: "Full discography management", icon: "opticaldisc", mockPrefix: "Album")
-            case .tracks:    UniversalManagementView(title: "Tracks Registry", subtitle: "Individual track metadata and stems", icon: "music.note", mockPrefix: "Track")
-            case .venues:    UniversalManagementView(title: "Venues", subtitle: "Performance locations and capacity management", icon: "map.fill", mockPrefix: "Venue")
-            case .managers:  UniversalManagementView(title: "Managers", subtitle: "Agent and management contact roster", icon: "person.3.fill", mockPrefix: "Manager")
+            case .albums:    AlbumCatalogView()
+            case .tracks:    TrackRegistryView()
+            case .venues:    VenuesDirectoryView()
+            case .managers:  ManagersDirectoryView()
             case .none:
                 ContentUnavailableView(
                     "Select a Module",
@@ -165,6 +167,10 @@ struct AmplifyCoreApp: App {
     @State private var artistVM:    ArtistDirectoryViewModel
     @State private var eventsVM:    EventsViewModel
     @State private var financeVM:   FinanceViewModel
+    @State private var albumsVM:    AlbumCatalogViewModel
+    @State private var tracksVM:    TrackRegistryViewModel
+    @State private var venuesVM:    VenuesDirectoryViewModel
+    @State private var managersVM:  ManagersDirectoryViewModel
     private let artistRepo: ArtistRepository // Keep reference to pass to views if needed
 
     init() {
@@ -181,6 +187,10 @@ struct AmplifyCoreApp: App {
         let contractRepo = ContractRepository(client: db)
         let eventRepo    = EventRepository(client: db)
         let financeRepo  = FinanceRepository(client: db)
+        let albumRepo    = AlbumRepository(client: db)
+        let trackRepo    = TrackRepository(client: db)
+        let venueRepo    = VenueRepository(client: db)
+        let managerRepo  = ManagerRepository(client: db)
 
         _dashboardVM = State(initialValue: DashboardViewModel(revenueRepository: revenueRepo))
         _artistVM    = State(initialValue: ArtistDirectoryViewModel(
@@ -188,6 +198,10 @@ struct AmplifyCoreApp: App {
                                 contractRepository: contractRepo))
         _eventsVM    = State(initialValue: EventsViewModel(repo: eventRepo))
         _financeVM   = State(initialValue: FinanceViewModel(repo: financeRepo))
+        _albumsVM    = State(initialValue: AlbumCatalogViewModel(repo: albumRepo))
+        _tracksVM    = State(initialValue: TrackRegistryViewModel(repo: trackRepo))
+        _venuesVM    = State(initialValue: VenuesDirectoryViewModel(repo: venueRepo))
+        _managersVM  = State(initialValue: ManagersDirectoryViewModel(repo: managerRepo))
     }
 
     var body: some Scene {
@@ -197,6 +211,10 @@ struct AmplifyCoreApp: App {
                 .environment(artistVM)
                 .environment(eventsVM)
                 .environment(financeVM)
+                .environment(albumsVM)
+                .environment(tracksVM)
+                .environment(venuesVM)
+                .environment(managersVM)
                 .frame(minWidth: 1100, minHeight: 720)
         }
         // ✨ .titleBar: standard macOS 26 window chrome — adopts Liquid Glass automatically

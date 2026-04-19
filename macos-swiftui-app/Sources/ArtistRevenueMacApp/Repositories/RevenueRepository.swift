@@ -46,19 +46,31 @@ public final class RevenueRepository: Sendable {
     /// Each returned `RevenuePoint` represents one `(month, revenueType)` combination.
     /// The Dashboard chart plots three series (Streaming, Sync, Live) from this result.
     ///
-    /// - Parameter months: The number of trailing calendar months to include. Defaults to `12`.
+    /// - Parameter months: The number of trailing calendar months to include. Pass `nil` for all-time.
     /// - Returns: An array of `RevenuePoint` values ordered chronologically.
     /// - Throws:  `DatabaseError` on connection or decode failure.
-    public func fetchMonthlyRollup(months: Int = 12) async throws -> [RevenuePoint] {
-        let sql: PostgresQuery = """
-            SELECT DATE_TRUNC('month', log_date)    AS month,
-                   SUM(amount)::float8              AS total_amount,
-                   revenue_type::text               AS revenue_type
-            FROM   revenue_logs
-            WHERE  log_date >= CURRENT_DATE - (\(months) * INTERVAL '1 month')
-            GROUP  BY DATE_TRUNC('month', log_date), revenue_type
-            ORDER  BY month ASC
-            """
+    public func fetchMonthlyRollup(months: Int? = 12) async throws -> [RevenuePoint] {
+        let sql: PostgresQuery
+        if let months {
+            sql = """
+                SELECT DATE_TRUNC('month', log_date)    AS month,
+                       SUM(amount)::float8              AS total_amount,
+                       revenue_type::text               AS revenue_type
+                FROM   revenue_logs
+                WHERE  log_date >= CURRENT_DATE - (\(months) * INTERVAL '1 month')
+                GROUP  BY DATE_TRUNC('month', log_date), revenue_type
+                ORDER  BY month ASC
+                """
+        } else {
+            sql = """
+                SELECT DATE_TRUNC('month', log_date)    AS month,
+                       SUM(amount)::float8              AS total_amount,
+                       revenue_type::text               AS revenue_type
+                FROM   revenue_logs
+                GROUP  BY DATE_TRUNC('month', log_date), revenue_type
+                ORDER  BY month ASC
+                """
+        }
 
         return try await client.query(sql) { row in
             let (month, totalAmount, revenueTypeStr) =
@@ -81,19 +93,33 @@ public final class RevenueRepository: Sendable {
     /// Uses a `FILTER (WHERE revenue_type = ...)` aggregate to produce three columns
     /// in a single pass, avoiding multiple sub-queries.
     ///
+    /// - Parameter months: The number of trailing calendar months to include. Pass `nil` for all-time.
     /// - Returns: An array of `RevenuePivotRow` values ordered chronologically.
     /// - Throws:  `DatabaseError` on query failure.
-    public func fetchPivot() async throws -> [RevenuePivotRow] {
-        let sql: PostgresQuery = """
-            SELECT DATE_TRUNC('month', log_date)                                         AS month,
-                   COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'STREAMING'), 0)::float8 AS streaming_amt,
-                   COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'SYNC'), 0)::float8      AS sync_amt,
-                   COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'LIVE'), 0)::float8      AS live_amt
-            FROM   revenue_logs
-            WHERE  log_date >= CURRENT_DATE - (12 * INTERVAL '1 month')
-            GROUP  BY DATE_TRUNC('month', log_date)
-            ORDER  BY month ASC
-            """
+    public func fetchPivot(months: Int? = 12) async throws -> [RevenuePivotRow] {
+        let sql: PostgresQuery
+        if let months {
+            sql = """
+                SELECT DATE_TRUNC('month', log_date)                                              AS month,
+                       COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'STREAMING'), 0)::float8 AS streaming_amt,
+                       COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'SYNC'), 0)::float8      AS sync_amt,
+                       COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'LIVE'), 0)::float8      AS live_amt
+                FROM   revenue_logs
+                WHERE  log_date >= CURRENT_DATE - (\(months) * INTERVAL '1 month')
+                GROUP  BY DATE_TRUNC('month', log_date)
+                ORDER  BY month ASC
+                """
+        } else {
+            sql = """
+                SELECT DATE_TRUNC('month', log_date)                                              AS month,
+                       COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'STREAMING'), 0)::float8 AS streaming_amt,
+                       COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'SYNC'), 0)::float8      AS sync_amt,
+                       COALESCE(SUM(amount) FILTER (WHERE revenue_type = 'LIVE'), 0)::float8      AS live_amt
+                FROM   revenue_logs
+                GROUP  BY DATE_TRUNC('month', log_date)
+                ORDER  BY month ASC
+                """
+        }
 
         return try await client.query(sql) { row in
             let (month, streamingAmt, syncAmt, liveAmt) =
