@@ -28,7 +28,7 @@ struct ArtistDetailView: View {
                         // Placeholder sections for future deep-fetch integration
                         historicalDataSection
                     }
-                }aaLAIJUDFNBHSBNDSHÁBHDBSHSẠNHBDH HC   CVFSĐ
+                }
                 .padding(24)
             }
             .background(Color.clear)
