@@ -1,78 +1,83 @@
-\section{Introduction}
+% ============================================================
+% Section 1: Giới thiệu (Slides 2–3)
+% ============================================================
+\section{Giới thiệu}
 
-\begin{frame}{Database Objectives}
-    \sectionCard{Artist Revenue Management System}{Database Design Project}
-
+% ----- Slide 2: Bối cảnh & Vấn đề -----
+\begin{frame}{Bối cảnh \& Vấn đề}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \textbf{Problem Statement:}
-            \begin{itemize}
-                \item Music artists have revenue from \highlight{multiple sources}: streaming, download, live shows
-                \item Need to manage \highlight{contracts}, revenue splitting between multiple parties
-                \item Track tracks, albums, bookings and payments
-            \end{itemize}
+        \begin{column}{0.52\textwidth}
+            \begin{alertblock}{Hiện trạng}
+                \begin{itemize}
+                    \item<1-> Công ty quản lý V-Pop đang dùng \coral{Excel}
+                    \item<2-> Không scale khi quản lý 50+ nghệ sĩ
+                    \item<3-> Không có audit trail cho doanh thu
+                    \item<4-> Không real-time, dễ sai sót thủ công
+                \end{itemize}
+            \end{alertblock}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \textbf{Database Goals:}
-            \begin{itemize}
-                \item Manage artist info, record labels, albums, tracks
-                \item Record revenue from multiple sources
-                \item Manage contracts \& profit distribution
-                \item Statistics, revenue trend analysis
-            \end{itemize}
+        \begin{column}{0.44\textwidth}
+            \begin{exampleblock}{Giải pháp}
+                Xây dựng \highlight{hệ thống CSDL chuyên biệt}:
+                \begin{itemize}
+                    \item Quản lý nghệ sĩ, hợp đồng, doanh thu
+                    \item 3 nguồn thu: Streaming, Sync, Live
+                    \item Ví điện tử + rút tiền minh bạch
+                    \item Dashboard phân tích real-time
+                \end{itemize}
+            \end{exampleblock}
         \end{column}
     \end{columns}
+
+    \note{
+        Kể câu chuyện: ``Hãy tưởng tượng một label quản lý 50 nghệ sĩ
+        bằng Excel --- mỗi tháng phải chia tiền cho hàng trăm bài hát
+        từ 3 nguồn thu khác nhau. Sai 1 con số = mất niềm tin nghệ sĩ.''
+        Đó là lý do nhóm chọn đề tài này.
+    }
 \end{frame}
 
-\begin{frame}{User Personas}
+% ----- Slide 3: Yêu cầu hệ thống -----
+\begin{frame}{Yêu cầu hệ thống}
     \begin{columns}[T]
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering 🎤 Artists}
-                \small
-                \begin{itemize}
-                    \item View personal revenue
-                    \item Track tracks, albums
-                    \item Check wallet balance
-                    \item View booking schedule
-                \end{itemize}
-            \end{block}
+        \begin{column}{0.50\textwidth}
+            \textbf{4 nhóm người dùng:}
+            \begin{enumerate}
+                \item \textbf{Artist} --- xem doanh thu, ví, rút tiền
+                \item \textbf{Label} --- quản lý hợp đồng, chia doanh thu
+                \item \textbf{Manager} --- lịch biểu diễn, đặt venue
+                \item \textbf{Admin} --- thống kê toàn hệ thống, audit
+            \end{enumerate}
+
+            \vspace{0.5em}
+            \textbf{Yêu cầu chính:}
+            \begin{itemize}\small
+                \item Quản lý nghệ sĩ (solo / band / composer)
+                \item Hợp đồng + chia tỷ lệ doanh thu
+                \item Doanh thu đa nguồn (streaming, sync, live)
+                \item Ví điện tử + rút tiền
+            \end{itemize}
         \end{column}
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering 🏢 Record Labels}
-                \small
-                \begin{itemize}
-                    \item Manage signed artists
-                    \item Create \& manage contracts
-                    \item Distribute revenue
-                    \item Monitor revenue logs
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.33\textwidth}
-            \begin{block}{\centering 📊 Administrators}
-                \small
-                \begin{itemize}
-                    \item System-wide statistics
-                    \item Manage venues, bookings
-                    \item Revenue reports
-                    \item Dashboard analytics
+        \begin{column}{0.46\textwidth}
+            \begin{block}{Business Rules}
+                \begin{itemize}\small
+                    \item \textbf{BR-01:} Tổng \tbl{share\_percentage} mỗi
+                          (contract, track) $\leq$ 1.0
+                    \item \textbf{BR-02:} Wallet chỉ giảm khi withdrawal
+                          \sql{status = 'completed'}
+                    \item \textbf{BR-03:} Revenue logs \coral{append-only}
+                          --- sửa bằng reversal entry
+                    \item \textbf{BR-05:} Live revenue \textbf{bắt buộc}
+                          liên kết \tbl{event\_id}
                 \end{itemize}
             \end{block}
         \end{column}
     \end{columns}
-\end{frame}
 
-\begin{frame}{Tech Stack}
-    \centering
-    \begin{tabular}{l l l}
-        \toprule
-        \textbf{Layer} & \textbf{Technology} & \textbf{Role} \\
-        \midrule
-        Database    & PostgreSQL 16 + pgvector  & Storage \& queries \\
-        Backend     & SQL Stored Procedures     & Data exploitation \\
-        Frontend    & Streamlit + Plotly        & Dashboard analytics \\
-        Infra       & Docker Compose            & Deployment \\
-        VCS         & Git + GitHub              & Source code management \\
-        \bottomrule
-    \end{tabular}
+    \note{
+        Nhấn mạnh tính thực tế: ``Đây không phải bài tập giả định ---
+        dữ liệu lấy từ MusicBrainz API và Ticketbox thực tế.''
+        Business rules là yếu tố quan trọng nhất --- tất cả SP đều
+        phải tuân thủ các rules này.
+    }
 \end{frame}

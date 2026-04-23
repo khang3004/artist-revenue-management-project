@@ -70,3 +70,13 @@ Thumbs.db
 etl/data_lake/raw/**
 etl/data_lake/clean/**
 !etl/data_lake/**/.gitkeep
+
+# === macOS SwiftUI App ===
+.build/
+.swiftpm/
+Packages/
+Package.pins
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/

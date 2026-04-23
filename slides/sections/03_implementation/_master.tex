@@ -1,93 +1,111 @@
-\section{Implementation Results}
+% ============================================================
+% Section 3: Thiết kế chi tiết (Slides 7–8)
+% ============================================================
+\section{Thiết kế chi tiết}
 
-\begin{frame}{Physical Design -- Main Tables}
-    \centering
-    \small
-    \begin{tabular}{l l l l}
-        \toprule
-        \textbf{Attribute} & \textbf{Description} & \textbf{Type} & \textbf{Constraints} \\
-        \midrule
-        \multicolumn{4}{l}{\highlight{Table: artists}} \\
-        artist\_id  & Artist ID      & SERIAL       & PK \\
-        stage\_name & Stage name        & VARCHAR(100) & NOT NULL \\
-        full\_name  & Real name         & VARCHAR(150) & NOT NULL \\
-        debut\_date & Debut date      & DATE         & \\
-        metadata   & Social media links & JSONB        & \\
-        label\_id  & Label ID    & INT          & FK $\rightarrow$ labels \\
-        \midrule
-        \multicolumn{4}{l}{\highlight{Table: tracks}} \\
-        track\_id   & Track ID       & SERIAL       & PK \\
-        title      & Track title           & VARCHAR(200) & NOT NULL \\
-        duration   & Duration (seconds) & INT          & CHECK $>$ 0 \\
-        album\_id  & Album ID          & INT          & FK $\rightarrow$ albums \\
-        play\_count & Play count        & BIGINT       & DEFAULT 0 \\
-        isrc       & International code & VARCHAR(12)  & UNIQUE \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{0.5em}
-    \scriptsize \textit{(See all 13 tables in the report)}
-\end{frame}
-
-\begin{frame}{PostgreSQL Implementation}
+% ----- Slide 7: Thiết kế vật lý -----
+\begin{frame}{Thiết kế vật lý --- Highlights}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{Infrastructure}
-                \small
+        \begin{column}{0.50\textwidth}
+            \begin{block}{Kỹ thuật nổi bật}
                 \begin{itemize}
-                    \item \highlight{Docker Compose}: PostgreSQL 16 + pgvector + pgAdmin
-                    \item SQL scripts run \textbf{idempotent} (DROP IF EXISTS)
-                    \item Migrations in order: \texttt{001\_ $\rightarrow$ 002\_ $\rightarrow$ 003\_}
+                    \item<1-> \textbf{UUID} cho \tbl{contracts.contract\_id}
+                          {\scriptsize --- chống đoán ID, \sql{gen\_random\_uuid()}}
+                    \item<2-> \textbf{JSONB + GIN index} cho \tbl{artists.metadata}
+                          {\scriptsize --- tìm kiếm genre, social\_links linh hoạt}
+                    \item<3-> \textbf{Append-only} \tbl{revenue\_logs}
+                          {\scriptsize --- trigger chặn UPDATE/DELETE}
+                    \item<4-> \textbf{Partitioning} theo quý (\tbl{log\_date})
+                          {\scriptsize --- tăng tốc truy vấn doanh thu}
+                    \item<5-> \textbf{Expression index} trên \sql{LOWER(stage\_name)}
+                          {\scriptsize --- tìm kiếm case-insensitive}
                 \end{itemize}
             \end{block}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{exampleblock}{Sample Data}
-                \small
-                \begin{tabular}{l r}
-                    \toprule
-                    \textbf{Table} & \textbf{Records} \\
-                    \midrule
-                    labels         & 5 \\
-                    artists        & 10 \\
-                    albums         & 15 \\
-                    tracks         & 40 \\
-                    revenue\_logs  & 100+ \\
-                    contracts      & 10 \\
-                    contract\_splits & 20 \\
-                    bookings       & 15 \\
-                    \bottomrule
-                \end{tabular}
+        \begin{column}{0.46\textwidth}
+            \begin{exampleblock}{Neon Serverless Postgres 16}
+                \begin{itemize}\small
+                    \item SSL luôn bật, SCRAM-SHA-256
+                    \item Connection pooling sẵn có
+                    \item Không cần Docker local
+                    \item \sql{gen\_random\_uuid()} built-in
+                \end{itemize}
             \end{exampleblock}
-        \end{column}
-    \end{columns}
-\end{frame}
 
-\begin{frame}{Views \& Materialized Views}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{Views (real-time computed)}
-                \small
-                \tbl{v\_top\_artists}: \\
-                \quad Top artists by total plays \\
-
-                \vspace{0.5em}
-                \tbl{v\_top\_artists2}: \\
-                \quad Top artists by actual revenue
+            \vspace{0.4em}
+            \begin{block}{Indexes}
+                \begin{itemize}\scriptsize
+                    \item \tbl{idx\_artists\_metadata\_gin} --- GIN
+                    \item \tbl{idx\_revlog\_track\_date} --- B-Tree composite
+                    \item \tbl{idx\_contracts\_active} --- Partial
+                    \item \tbl{idx\_artists\_name\_lower} --- Expression
+                \end{itemize}
             \end{block}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{alertblock}{Materialized View (cached)}
-                \small
-                \tbl{mv\_top\_artist\_cached}: \\
-                \quad Pre-computed ranking \\
-                \quad Faster query for Dashboard \\
-                \quad Periodic refresh:
-                \vspace{0.3em}
+    \end{columns}
 
-                \texttt{\scriptsize REFRESH MATERIALIZED VIEW} \\
-                \texttt{\scriptsize mv\_top\_artist\_cached;}
-            \end{alertblock}
+    \note{
+        Tại sao chọn Neon thay Docker local?
+        (1) SSL + SCRAM-SHA-256 mặc định --- không cần config bảo mật.
+        (2) Connection pooling --- Streamlit mở nhiều session.
+        (3) Free tier đủ cho đồ án (500MB storage).
+        Giải thích append-only: revenue\_logs có trigger chặn UPDATE/DELETE.
+        Nếu cần sửa, INSERT entry mới với amount âm (reversal).
+    }
+\end{frame}
+
+% ----- Slide 8: ETL Pipeline -----
+\begin{frame}{ETL Pipeline}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            \begin{tikzpicture}[
+                node distance=0.7cm,
+                font=\scriptsize,
+                box/.style={draw, rounded corners, minimum width=3.5cm,
+                            minimum height=0.55cm, align=center}
+            ]
+                \node[box, fill=coralAccent!15]  (src)   {Sources: Apple Music, MusicBrainz, TicketBox};
+                \node[box, fill=iceBlue!40,      below=of src]   (raw)   {Extract $\to$ data\_lake/raw/ (JSON)};
+                \node[box, fill=goldAccent!20,   below=of raw]   (enrich){Enrich: metadata, ISRC, genre};
+                \node[box, fill=codeGreen!15,    below=of enrich](clean) {Transform $\to$ data\_lake/clean/ (CSV)};
+                \node[box, fill=navyPrimary!15,  below=of clean] (neon)  {Load $\to$ Neon PostgreSQL 16};
+
+                \draw[->, thick] (src)    -- (raw);
+                \draw[->, thick] (raw)    -- (enrich);
+                \draw[->, thick] (enrich) -- (clean);
+                \draw[->, thick] (clean)  -- (neon) node[midway, right] {\small UPSERT};
+            \end{tikzpicture}
+        \end{column}
+        \begin{column}{0.46\textwidth}
+            \textbf{Dữ liệu đã load (post-ETL):}
+            \vspace{0.3em}
+            \begin{tabular}{@{}lr@{}}
+                \toprule
+                \textbf{Bảng}         & \textbf{Records} \\
+                \midrule
+                labels                & 183 \\
+                artists               & 40 \\
+                albums                & 781 \\
+                tracks                & 250 \\
+                revenue\_logs         & 3{,}180 \\
+                contracts             & 45 \\
+                contract\_splits      & 498 \\
+                events                & 81 \\
+                artist\_wallets       & 22 \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.4em}
+            {\scriptsize Targets: Local PostgreSQL (dev) + Neon (prod)}
         \end{column}
     \end{columns}
+
+    \note{
+        Pipeline chạy bằng Python + SQLAlchemy.
+        Extract từ 3 nguồn API thực tế.
+        Enrich: bổ sung ISRC code, genre từ MusicBrainz.
+        Transform: chuẩn hoá tên, đổi đơn vị tiền.
+        Load: UPSERT (ON CONFLICT DO UPDATE) để idempotent.
+        Demo data pipeline nếu có thời gian.
+    }
 \end{frame}

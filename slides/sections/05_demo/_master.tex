@@ -1,80 +1,65 @@
-\section{Application Demo}
+% ============================================================
+% Section 5: Demo (Slide 11)
+% ============================================================
+\section{Demo}
 
-\begin{frame}{Demo System Architecture}
-    \centering
-    \begin{tikzpicture}[
-        node distance=1.5cm,
-        box/.style={draw, rounded corners, minimum width=3cm, minimum height=1cm, align=center, font=\small},
-        arrow/.style={->, thick, >=stealth}
-    ]
-        \node[box, fill=blue!15] (user) {User \\ (Browser)};
-        \node[box, fill=green!15, right=2cm of user] (streamlit) {Streamlit \\ Dashboard};
-        \node[box, fill=orange!15, right=2cm of streamlit] (postgres) {PostgreSQL 16 \\ + pgvector};
-        \node[box, fill=gray!15, below=1cm of streamlit] (docker) {Docker Compose};
-
-        \draw[arrow] (user) -- node[above, font=\scriptsize] {:8501} (streamlit);
-        \draw[arrow] (streamlit) -- node[above, font=\scriptsize] {SQL / SP} (postgres);
-        \draw[arrow, dashed, gray] (docker.west) -| (streamlit);
-        \draw[arrow, dashed, gray] (docker.east) -| (postgres);
-    \end{tikzpicture}
-
-    \vspace{1em}
-    \small
-    Run everything with 1 command: \texttt{\highlight{docker compose up -d}}
-\end{frame}
-
-\begin{frame}{Dashboard -- Overview Statistics}
-    % TODO: Insert Streamlit Dashboard screenshot
-    \centering
-    \begin{beamercolorbox}[sep=8pt, center, shadow=true, rounded=true]{block body}
-        \large \textit{(Insert Dashboard screenshot here)}
-    \end{beamercolorbox}
-
-    \vspace{0.5em}
-    \small
-    \begin{columns}[c]
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Artists}{10}
-        \end{column}
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Tracks}{40+}
-        \end{column}
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Revenue}{500M+}
-        \end{column}
-        \begin{column}{0.25\textwidth}
-            \centering
-            \kpiCard{3.5cm}{Bookings}{15}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Revenue Charts \& PIVOT}
+% ----- Slide 11: Demo -----
+\begin{frame}{Live Demo}
     \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \centering
-            \textbf{Revenue by month (ROLLUP)} \\
-            \vspace{0.5em}
-            % TODO: Insert revenue chart screenshot
-            \begin{beamercolorbox}[sep=5pt, center, rounded=true]{block body}
-                \scriptsize \textit{(Screenshot of Plotly chart)}
-            \end{beamercolorbox}
+        \begin{column}{0.50\textwidth}
+            \begin{alertblock}{Data Storyteller Opening}
+                \centering
+                {\large \coral{Khanh Vu Nguyen Nang}} \\
+                \vspace{0.3em}
+                \scriptsize Mở đầu bằng phần rap intro, \\
+                sau đó chuyển sang demo SQL
+            \end{alertblock}
+
+            \vspace{0.4em}
+            \begin{block}{Kịch bản demo}
+                \begin{enumerate}\small
+                    \item Đăng ký nghệ sĩ mới (SP9)
+                    \item Ghi nhận doanh thu (SP10)
+                    \item ROLLUP doanh thu (SP1)
+                    \item Pivot theo nguồn (SP2)
+                    \item Wallet audit (SP6)
+                    \item Tìm kiếm JSONB (SP8)
+                \end{enumerate}
+            \end{block}
         \end{column}
-        \begin{column}{0.5\textwidth}
-            \centering
-            \textbf{PIVOT: revenue source $\times$ artist} \\
+        \begin{column}{0.46\textwidth}
+            \begin{tikzpicture}[
+                node distance=0.7cm,
+                font=\scriptsize,
+                box/.style={draw, rounded corners, minimum width=3.2cm,
+                            minimum height=0.55cm, align=center}
+            ]
+                \node[box, fill=coralAccent!15]  (user)  {Browser};
+                \node[box, fill=iceBlue!40,      below=of user]  (st)    {Streamlit (:8501)};
+                \node[box, fill=codeGreen!15,    below=of st]    (sp)    {14 Stored Procedures};
+                \node[box, fill=navyPrimary!15,  below=of sp]    (db)    {Neon PostgreSQL 16};
+
+                \draw[->, thick] (user) -- (st);
+                \draw[->, thick] (st)   -- (sp)
+                    node[midway, right] {\texttt{SELECT/CALL}};
+                \draw[->, thick] (sp)   -- (db)
+                    node[midway, right] {\texttt{RETURN TABLE}};
+            \end{tikzpicture}
+
             \vspace{0.5em}
-            % TODO: Insert PIVOT table screenshot
-            \begin{beamercolorbox}[sep=5pt, center, rounded=true]{block body}
-                \scriptsize \textit{(Screenshot of crosstab table)}
-            \end{beamercolorbox}
+            \begin{exampleblock}{\small Backup plan}
+                \scriptsize
+                Nếu Streamlit không ổn định (cold start) \\
+                $\to$ demo trực tiếp qua pgAdmin / DBeaver
+            \end{exampleblock}
         \end{column}
     \end{columns}
 
-    \vspace{1em}
-    \centering
-    \small Data directly from \highlight{Stored Procedures} $\rightarrow$ Plotly charts
+    \note{
+        ``Khanh mở đầu bằng rap intro, sau đó chuyển sang demo SQL.''
+        Demo live trên Neon --- chạy SP trực tiếp, hiện kết quả.
+        Backup: nếu Streamlit cold start quá lâu (Neon free tier),
+        chuyển sang pgAdmin chạy SQL trực tiếp.
+        Thời gian demo: 3--4 phút.
+    }
 \end{frame}

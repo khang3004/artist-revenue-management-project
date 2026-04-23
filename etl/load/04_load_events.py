@@ -5,6 +5,7 @@ Load Step 4: Load Events, Venues, Managers, and Event Performers
 import pandas as pd
 from sqlalchemy import text
 import sys, os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from config import CLEAN_DIR
 from load.loader import get_engine, execute_sql, execute_values_upsert
@@ -27,16 +28,19 @@ def run():
     if v_path.exists():
         df = pd.read_csv(v_path)
         execute_sql(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_venues_name "
-            "ON venues (venue_name);"
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_venues_name ON venues (venue_name);"
         )
         rows = []
         for _, r in df.iterrows():
-            rows.append({
-                "venue_name": r["venue_name"],
-                "venue_address": r.get("venue_address"),
-                "capacity": int(r["capacity"]) if pd.notna(r.get("capacity")) else None,
-            })
+            rows.append(
+                {
+                    "venue_name": r["venue_name"],
+                    "venue_address": r.get("venue_address"),
+                    "capacity": int(r["capacity"])
+                    if pd.notna(r.get("capacity"))
+                    else None,
+                }
+            )
         execute_values_upsert(
             table="venues",
             columns=["venue_name", "venue_address", "capacity"],
@@ -56,10 +60,12 @@ def run():
         )
         rows = []
         for _, r in df.iterrows():
-            rows.append({
-                "manager_name": r["manager_name"],
-                "manager_phone": r.get("manager_phone"),
-            })
+            rows.append(
+                {
+                    "manager_name": r["manager_name"],
+                    "manager_phone": r.get("manager_phone"),
+                }
+            )
         execute_values_upsert(
             table="managers",
             columns=["manager_name", "manager_phone"],
@@ -96,24 +102,28 @@ def run():
         vid = venue_map.get(r.get("venue_name"))
         mid = manager_map.get(r.get("manager_name"))
 
-        event_rows.append({
-            "event_name": ename,
-            "event_date": edate,
-            "venue_id": vid,
-            "manager_id": mid,
-            "status": r.get("status", "Scheduled"),
-        })
+        event_rows.append(
+            {
+                "event_name": ename,
+                "event_date": edate,
+                "venue_id": vid,
+                "manager_id": mid,
+                "status": str(r.get("status", "SCHEDULED")).upper(),
+            }
+        )
 
         # Track artist link for event_performers
         aname = r.get("artist_name")
         if aname:
             aid = artist_map.get(aname)
             if aid:
-                performer_links.append({
-                    "event_name": ename,
-                    "event_date": edate,
-                    "artist_id": aid,
-                })
+                performer_links.append(
+                    {
+                        "event_name": ename,
+                        "event_date": edate,
+                        "artist_id": aid,
+                    }
+                )
 
     execute_values_upsert(
         table="events",
@@ -139,10 +149,12 @@ def run():
         for p in performer_links:
             eid = event_map.get((p["event_name"], str(p["event_date"])[:10]))
             if eid:
-                perf_rows.append({
-                    "event_id": eid,
-                    "artist_id": p["artist_id"],
-                })
+                perf_rows.append(
+                    {
+                        "event_id": eid,
+                        "artist_id": p["artist_id"],
+                    }
+                )
 
         if perf_rows:
             execute_values_upsert(

@@ -1,11 +1,11 @@
 % -----------------------------------------------------------------------------
 % File: settings/packages.tex
-% Description: Centralized package imports for Artist Revenue slides
+% Compile: xelatex -shell-escape main.tex
 % -----------------------------------------------------------------------------
 
 % --- Visualization ---
 \usepackage{tikz}
-\usetikzlibrary{shapes, shapes.geometric, arrows, positioning, fit, calc, shadows, er}
+\usetikzlibrary{shapes, shapes.geometric, arrows, positioning, fit, calc, shadows}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 
@@ -23,19 +23,26 @@
 \lstset{
     language=SQL,
     basicstyle=\ttfamily\tiny,
-    keywordstyle=\bfseries\color{techBlue},
+    keywordstyle=\bfseries\color{navyPrimary},
     stringstyle=\color{codeGreen},
     commentstyle=\color{gray},
     breaklines=true,
     frame=single,
-    backgroundcolor=\color{gray!10},
+    backgroundcolor=\color{iceBlue!15},
     numbers=left,
     numberstyle=\tiny\color{gray},
+    morekeywords={ROLLUP, GROUPING, FILTER, LATERAL, PARTITION, OVER,
+                  RANK, JSONB, CALL, PROCEDURE, RETURNS, LANGUAGE,
+                  plpgsql, COALESCE, RAISE, EXCEPTION, NOTICE,
+                  RETURNING, EXECUTE, FUNCTION, BEGIN, END, DECLARE,
+                  RECORD, FOUND, PERFORM, IF, THEN, ELSE, ELSIF,
+                  CASE, WHEN, INTO, OUT, INOUT, LOOP, EXIT, FOR,
+                  make_date, jsonb_build_object},
 }
-
-% --- Bibliography ---
-% \usepackage[style=ieee, backend=biber]{biblatex}
-% \addbibresource{bib/references.bib}
 
 % --- Graphics ---
 \usepackage{graphicx}
+
+% --- Hyperlinks ---
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=navyPrimary, urlcolor=coralAccent}
