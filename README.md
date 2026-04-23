@@ -1,152 +1,134 @@
-# 🎵 Artist Revenue Management System
+# 🎵 Artist Revenue Management: Enterprise Financial Intelligence
 
-> **MDL018 — Data Organization and Management**
-> University of Science — VNU-HCM
+![Platform Overview](assets/revenue_dashboard.png)
+
+<div align="center">
+
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%2016-blue?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20Tahoe-000000?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://swift.org/)
+[![Docker](https://img.shields.io/badge/Infrastructure-Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+**Architected for Scale. Engineered for Precision.**
+*A high-performance financial management ecosystem for music labels and independent artists.*
+
+</div>
 
 ---
 
-## 🏗️ Tech Stack
+## 💎 The Vision
 
-| Layer    | Technology               |
-| -------- | ------------------------ |
-| Database | PostgreSQL 16 + pgvector |
-| Backend  | SQL Stored Procedures    |
-| Frontend | Streamlit + Plotly       |
-| Infra    | Docker Compose           |
-| VCS      | Git + GitHub             |
+Modern music revenue is fragmented across streaming, live performances, and physical sales. This project provides a **unified financial source of truth**. 
+
+Unlike generic accounting software, this system is built on a **Domain-Specific Database Schema** that understands the nuances of artist-label contracts, revenue splits, and automated wallet reconciliations. It leverages a **Liquid Glass UI** for macOS Tahoe, delivering a premium, data-dense, yet visually stunning experience for management professionals.
+
+---
+
+## 🖼️ Experience the Interface
+
+### 📊 Revenue Intelligence & Forecasting
+Deep dive into financial performance with multi-dimensional analysis. Powered by PostgreSQL `ROLLUP` and `CUBE` operations, visualized through native SwiftUI Charts with glassmorphism effects.
+
+![Revenue Analytics](assets/revenue_analytics.png)
+
+### 📄 Financial Engineering: Contracts & Splits
+Manage complex legal agreements with automated split logic. The system ensures transactional integrity during revenue distribution across multiple stakeholders.
+
+![Finance & Contracts](assets/finance_contracts.png)
+
+### 💿 Inventory Management: Albums & Tracks
+A comprehensive catalog system that tracks metadata, ownership, and performance metrics at a granular level.
+
+<div align="center">
+  <img src="assets/album_catalog.png" width="49%" />
+  <img src="assets/tracks_catalog.png" width="49%" />
+</div>
+
+### 🎤 Operations: Live Events & Venues
+Real-time tracking of performance revenue, venue bookings, and logistical coordination.
+
+![Live Events](assets/live_events_venues.png)
+
+---
+
+## 🏗️ Technical Architecture
+
+### 🗄️ Database Engineering (The Core)
+At the heart of the system is a highly optimized **PostgreSQL 16** cluster, engineered with a Senior DBA mindset:
+- **Relational Integrity**: Strict schema enforcement using advanced constraints and triggers to ensure financial consistency.
+- **ISA Inheritance Model**: Sophisticated artist classification (Solo vs. Band) using relational inheritance patterns for flexible entity management.
+- **Stored Procedure Library**: 15+ specialized procedures for revenue rollups, wallet audits, and contract splits, keeping business logic close to the data for maximum performance.
+- **Materialized Views**: Optimized for analytical workloads (OLAP), providing low-latency access to complex financial trends.
+
+### 💻 macOS Native Interface (The Experience)
+The **Amplify Core** macOS application implements the **Liquid Glass UI** philosophy:
+- **Tahoe-Ready**: Built specifically for macOS 26.0+ utilizing `glassEffect`, `GlassEffectContainer`, and `backgroundExtensionEffect`.
+- **Async Data Pipeline**: Leverages `PostgresNIO` for non-blocking, high-performance database communication.
+- **SwiftUI 6.0+**: A purely reactive UI that stays synchronized with the database state in real-time.
 
 ---
 
 ## 📁 Project Structure
 
-```
-artist-revenue-management/
-│
-├── README.md                       # This file
-├── CONTRIBUTING.md                # Git conventions and workflow
-├── .gitignore
-├── .env.example                   # Environment variables template
-├── docker-compose.yml             # PostgreSQL + pgAdmin + Streamlit
-│
-├── db/                             # 🗄️ Database scripts
-│   ├── migrations/                 # DDL scripts (run in order)
-│   │   ├── 001_create_tables.sql
-│   │   ├── 002_create_isa.sql      # ISA tables (solo_artist, band)
-│   │   └── 003_create_views.sql    # Views + Materialized Views
-│   ├── seeds/                      # Sample data
-│   │   ├── 001_seed_labels.sql
-│   │   ├── 002_seed_artists.sql
-│   │   ├── 003_seed_albums_tracks.sql
-│   │   ├── 004_seed_contracts.sql
-│   │   ├── 005_seed_revenue.sql
-│   │   └── 006_seed_bookings.sql
-│   └── procedures/                 # Stored procedures
-│       ├── sp_revenue_rollup.sql
-│       ├── sp_revenue_pivot.sql
-│       ├── sp_top_artists.sql
-│       ├── sp_contract_splits.sql
-│       └── sp_booking_stats.sql
-│
-├── app/                            # 🖥️ Streamlit application
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   ├── app.py                      # Main entry point
-│   ├── pages/
-│   │   ├── 1_📊_Dashboard.py
-│   │   ├── 2_🎤_Artists.py
-│   │   └── 3_💰_Revenue.py
-│   ├── utils/
-│   │   └── db.py                   # Database connection helper
-│   └── assets/
-│       └── style.css
-│
-├── docs/                           # 📝 Project documentation
-│   ├── dac-ta-yeu-cau.md           # Data requirements specification
-│   ├── thiet-ke-luan-ly.md         # Logical design
-│   ├── thiet-ke-vat-ly.md          # Physical design
-│   ├── stored-procedures-plan.md   # Stored procedures plan
-│   └── erd/
-│       ├── erd.dbml                # ERD source (dbdiagram.io)
-│       └── erd.png                 # ERD image export
-│
-├── reports/                        # 📄 Deliverables
-│   ├── MaNhom.docx                 # Final report
-│   └── screenshots/                # Query results
-│       ├── sp1_revenue_rollup.png
-│       ├── sp2_revenue_pivot.png
-│       └── ...
-│
-└── slides/                         # 🎬 Presentation slides
-    └── main.tex                    # LaTeX presentation file
-```
-
----
-
-## 🚀 Quickstart
-
 ```bash
-# 1. Clone repository
-git clone https://github.com/<org>/artist-revenue-management.git
-cd artist-revenue-management
-
-# 2. Copy environment file
-cp .env.example .env
-
-# 3. Start services
-docker compose up -d
-
-# 4. Access applications
-# Streamlit:  http://localhost:8501
-# pgAdmin:    http://localhost:5050
+artist-revenue-management/
+├── db/                        # 🗄️ Database Layer (Senior DBA Level)
+│   ├── migrations/            # Versioned DDL (V1..V10) for core entities & ISA
+│   ├── procedures/            # Business logic: Revenue rollups, splits, audits
+│   └── seeds/                 # High-fidelity mock data for stress testing
+├── macos-swiftui-app/         # 💻 Desktop Layer (Liquid Glass UI)
+│   ├── Sources/               # Native Swift implementation
+│   └── Package.swift          # SPM configuration with PostgresNIO
+├── etl/                       # 🔄 Data Integration
+│   └── pipeline/              # Ingestion scripts for external revenue sources
+├── app/                       # 📊 Legacy Web Portal (Streamlit Dashboard)
+├── docs/                      # 📝 Technical Specification
+│   ├── physical-design.md     # Indexing strategy and storage optimization
+│   └── logical-design.md      # Normalized ERD and relationship mapping
+└── docker-compose.yml         # Containerized infrastructure orchestration
 ```
 
 ---
 
-## 👥 Team Members
+## 🚀 Deployment & Initialization
 
-| Role               | Member | Student ID |
-| ------------------ | ------ | ---------- |
-| DB Architect (A)   | [Name] | [ID]       |
-| SQL Developer (B)  | [Name] | [ID]       |
-| Query Engineer (C) | [Name] | [ID]       |
-| Report & Demo (D)  | [Name] | [ID]       |
+### Prerequisites
+- **Docker & Docker Compose**
+- **macOS 26.0+ (Tahoe)** (for the native desktop app)
+- **Xcode 16+**
 
----
+### 1. Spin up the Database Cluster
+```bash
+docker compose up -d
+```
+*This initializes the PostgreSQL 16 instance, applies all migrations, and deploys the stored procedures automatically.*
 
-## 📝 Development Workflow
-
-1. **Create feature branch**: See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming conventions
-2. **Implement changes**: Follow code standards and commit conventions
-3. **Test locally**: Use Docker Compose for local testing
-4. **Create pull request**: Request team review before merging
-5. **Merge to develop**: Integration branch for all features
-6. **Release to main**: Production-ready code only
-
----
-
-## 📚 Documentation
-
-- **Data Specification**: [docs/dac-ta-yeu-cau.md](docs/dac-ta-yeu-cau.md)
-- **Logical Design**: [docs/thiet-ke-luan-ly.md](docs/thiet-ke-luan-ly.md)
-- **Physical Design**: [docs/thiet-ke-vat-ly.md](docs/thiet-ke-vat-ly.md)
-- **Stored Procedures**: [docs/stored-procedures-plan.md](docs/stored-procedures-plan.md)
-- **Git Workflow**: [CONTRIBUTING.md](CONTRIBUTING.md)
+### 2. Build the macOS Application
+```bash
+cd macos-swiftui-app
+swift build -c release
+```
 
 ---
 
-## 🎯 Project Status
+## 🛠️ Tech Stack
 
-- [x] Project structure initialized
-- [x] Docker configuration completed
-- [x] Documentation templates created
-- [ ] Database schema implementation
-- [ ] Sample data insertion
-- [ ] Stored procedures development
-- [ ] Streamlit dashboard development
-- [ ] Final report and presentation
+| Component | Technology |
+| :--- | :--- |
+| **Engine** | PostgreSQL 16 + pgvector |
+| **Connectivity** | PostgresNIO (Async Swift) |
+| **Desktop App** | SwiftUI + Liquid Glass (macOS Tahoe) |
+| **Infrastructure** | Docker, Docker Compose, Makefile |
+| **Analytics** | SQL Stored Procedures, Materialized Views |
 
 ---
 
-## 📞 Contact
+## 📞 Industry Contact
 
-For questions or issues, please open an issue in the repository or contact the team lead.
+For enterprise inquiries or implementation support:
+- **Architecture Lead**: [Your Name/Handle]
+- **Project Repository**: https://github.com/khang3004/artist-revenue-management-project
+
+---
+*© 2026 Artist Revenue Management Systems. All rights reserved.*

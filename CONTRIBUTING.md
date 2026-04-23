@@ -69,14 +69,16 @@ fix(db): correct foreign key constraint on contracts table
    git push origin main
    ```
 
-## Team Member Responsibilities
+## Contributing
 
-| Member | Role           | Responsibilities                                 |
-| ------ | -------------- | ------------------------------------------------ |
-| A      | DB Architect   | ERD design, data specification, requirements doc |
-| B      | SQL Developer  | DDL scripts, seed data, views creation           |
-| C      | Query Engineer | Stored procedures, data exploitation queries     |
-| D      | Report & Demo  | Streamlit app, slides, final report, screenshots |
+We welcome contributions from the community. Please follow our Git workflow and code standards to ensure high-quality integrations.
+
+### Contribution Process
+
+1. **Find an Issue**: Browse our open issues or create a new one to discuss your proposed changes.
+2. **Fork & Branch**: Create a feature branch from `develop`.
+3. **Implement**: Ensure your code follows the established style guidelines.
+4. **Pull Request**: Submit a PR to `develop` for review.
 
 ## File Naming Conventions
 
@@ -149,6 +151,20 @@ Testing:
 3. Code must follow style guidelines
 4. Documentation must be updated if needed
 
+## Testing Standards
+
+Before submitting a PR, ensure all changes are validated:
+
+### Database Testing
+- **Migrations**: Ensure `V*` scripts are idempotent and run without errors on a fresh database.
+- **Procedures**: Execute each stored procedure with edge-case parameters (e.g., zero revenue, null artist IDs).
+- **Audit Logs**: Verify that financial transactions generate the correct audit entries.
+
+### macOS App Testing
+- **Build**: Ensure the project compiles with `swift build`.
+- **UI Integrity**: Verify that Liquid Glass effects render correctly on macOS Tahoe.
+- **Performance**: Check for any main-thread blocking during database operations.
+
 ## Questions?
 
-Contact the team lead or open an issue in the repository.
+Contact the architecture lead or open an issue in the repository.
