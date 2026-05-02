@@ -164,7 +164,28 @@ Before submitting a PR, ensure all changes are validated:
 - **Build**: Ensure the project compiles with `swift build`.
 - **UI Integrity**: Verify that Liquid Glass effects render correctly on macOS Tahoe.
 - **Performance**: Check for any main-thread blocking during database operations.
+- **Environment**: Ensure the app correctly loads credentials from `.env` using `EnvLoader.swift`.
 
-## Questions?
+## 🔐 Security & Environment Variables
 
-Contact the architecture lead or open an issue in the repository.
+This project uses a `.env` file for managing sensitive credentials (Supabase passwords, API keys, etc.). 
+
+1. **Never commit `.env`**: The `.env` file is included in `.gitignore`. Always use `.env.example` as a template for new contributors.
+2. **Local Development (macOS App)**: The macOS application uses a custom `EnvLoader.swift` utility to read the `.env` file from the project root at runtime. This allows for seamless transitions between local and cloud database instances without changing code.
+3. **Adding New Variables**: If you add a new environment variable, ensure you:
+    - Update `.env.example` with a placeholder value.
+    - Update `EnvLoader.swift` if the variable needs to be accessed by the native app.
+
+---
+
+## 🛠️ Infrastructure Management
+
+We use **Docker** for local utility tools and **Supabase** for the primary persistence layer.
+
+### Remote Database Operations
+When performing maintenance or schema updates on the remote Supabase instance, use the following pattern:
+```bash
+# Example: Running a script from the 'db' directory
+docker run --rm -v $(pwd)/db:/db postgres psql -h [HOST] -U [USER] -d postgres -f /db/your_file.sql
+```
+\n## Questions?\n\nContact the architecture lead or open an issue in the repository.

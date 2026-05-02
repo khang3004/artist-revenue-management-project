@@ -60,19 +60,19 @@ Real-time tracking of performance revenue, venue bookings, and logistical coordi
 
 ### 🗄️ Database Engineering (The Core)
 
-At the heart of the system is a highly optimized **PostgreSQL 16** cluster, engineered with a Senior DBA mindset:
+At the heart of the system is a highly optimized **PostgreSQL 16** cluster, deployed on **Supabase** for enterprise-grade scalability and persistence:
 
 - **Relational Integrity**: Strict schema enforcement using advanced constraints and triggers to ensure financial consistency.
 - **ISA Inheritance Model**: Sophisticated artist classification (Solo vs. Band) using relational inheritance patterns for flexible entity management.
 - **Stored Procedure Library**: 15+ specialized procedures for revenue rollups, wallet audits, and contract splits, keeping business logic close to the data for maximum performance.
-- **Materialized Views**: Optimized for analytical workloads (OLAP), providing low-latency access to complex financial trends.
+- **Cloud Scale**: Fully migrated to Supabase, leveraging managed connection pooling (Supavisor) and automated backups.
 
 ### 💻 macOS Native Interface (The Experience)
 
 The **Amplify Core** macOS application implements the **Liquid Glass UI** philosophy:
 
 - **Tahoe-Ready**: Built specifically for macOS 26.0+ utilizing `glassEffect`, `GlassEffectContainer`, and `backgroundExtensionEffect`.
-- **Async Data Pipeline**: Leverages `PostgresNIO` for non-blocking, high-performance database communication.
+- **Async Data Pipeline**: Leverages `PostgresNIO` with a custom `EnvLoader` for non-blocking, secure database communication via SSL/TLS.
 - **SwiftUI 6.0+**: A purely reactive UI that stays synchronized with the database state in real-time.
 
 ---
@@ -107,15 +107,27 @@ artist-revenue-management/
 - **macOS 26.0+ (Tahoe)** (for the native desktop app)
 - **Xcode 16+**
 
-### 1. Spin up the Database Cluster
+### 1. Database Setup (Supabase)
+
+1. Create a new project on [Supabase](https://supabase.com/).
+2. Obtain your Connection String details from **Project Settings > Database**.
+3. Initialize your schema by importing the latest dump:
+   ```bash
+   docker run --rm -v $(pwd)/db:/db postgres psql -h [YOUR_HOST] -p 5432 -U [YOUR_USER] -d postgres -f /db/artist_revenue_db_backup.sql
+   ```
+
+### 2. Environment Configuration
+
+Copy the example environment file and fill in your Supabase credentials:
 
 ```bash
-docker compose up -d
+cp .env.example .env
+# Edit .env with your SUPABASE_DB_PASSWORD, etc.
 ```
 
-*This initializes the PostgreSQL 16 instance, applies all migrations, and deploys the stored procedures automatically.*
+### 3. Build the macOS Application
 
-### 2. Build the macOS Application
+The app automatically detects Supabase credentials from the root `.env` file via `EnvLoader`.
 
 ```bash
 cd macos-swiftui-app
@@ -128,10 +140,10 @@ swift build -c release
 
 | Component                | Technology                                |
 | :----------------------- | :---------------------------------------- |
-| **Engine**         | PostgreSQL 16 + pgvector                  |
-| **Connectivity**   | PostgresNIO (Async Swift)                 |
+| **Engine**         | PostgreSQL 16 (Supabase) + pgvector       |
+| **Connectivity**   | PostgresNIO + SSL/TLS                     |
 | **Desktop App**    | SwiftUI + Liquid Glass (macOS Tahoe)      |
-| **Infrastructure** | Docker, Docker Compose, Makefile          |
+| **Infrastructure** | Docker, Supabase, Makefile                |
 | **Analytics**      | SQL Stored Procedures, Materialized Views |
 
 *© 2026 Artist Revenue Management Systems. All rights reserved.*

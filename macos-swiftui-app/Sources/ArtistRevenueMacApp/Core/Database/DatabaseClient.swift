@@ -45,13 +45,21 @@ public actor DatabaseClient {
 
     private init() {
         self.logger = Logger(label: "com.labelmaster.database")
+        let env = EnvLoader.load()
+        let host = env["SUPABASE_DB_HOST"] ?? "localhost"
+        let port = Int(env["SUPABASE_DB_PORT"] ?? "5433") ?? 5433
+        let username = env["SUPABASE_DB_USER"] ?? "postgres"
+        let password = env["SUPABASE_DB_PASSWORD"] ?? "postgres"
+        let database = env["SUPABASE_DB_NAME"] ?? "artist_revenue_db"
+        let tls: PostgresClient.Configuration.TLS = host.contains("supabase") ? .require : .disable
+
         let configuration = PostgresClient.Configuration(
-            host:     "localhost",
-            port:     5433,
-            username: "postgres",
-            password: "postgres",
-            database: "artist_revenue_db",
-            tls:      .disable
+            host:     host,
+            port:     port,
+            username: username,
+            password: password,
+            database: database,
+            tls:      tls
         )
         self.client = PostgresClient(configuration: configuration)
     }
